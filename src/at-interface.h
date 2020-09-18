@@ -16,11 +16,10 @@
 #include <sys/ioctl.h>
 #include <linux/types.h>
 
-/* Modem model */
-#define SIM7600
+/* Modem model (defined in Makefile) */
+// #define SIM7600
 
 #define ATDELIM "\r\n\r\n"
-#define QDEBUG
 /* Time values */
 #define NS 1000000000
 #define POLL_TOUT 3000
@@ -30,6 +29,8 @@
 
 #define VMIN_USB 255
 #define VTIME_USB 5
+
+#define DMESGLOG "/var/log/kern.log"
 
 char at_usb_device[20];
 struct pollfd modemfd, serialfd;
@@ -45,6 +46,7 @@ char rx_modem[MAX_SIZE];
 char tx_modem[CMD_SIZE];
 char last_sent_cmd[CMD_SIZE];
 
+/* Custom structs */
 typedef struct Queue
 {
     int front, rear, size, capacity;
@@ -53,8 +55,15 @@ typedef struct Queue
 ATQueue* rx_queue;
 ATQueue* info_queue;
 
-void init_port(struct pollfd *fds, char *device, struct termios *s_port, int vmin, int vtime);
+typedef struct USBPorts {
+    int diag;
+    int gps;
+    int at;
+    int ppp;
+    int audio;
+} ModemUSBPorts;
 
+/* AT functions */
 void *at_control();
 void *read_at_data();
 
@@ -70,5 +79,9 @@ char* front(ATQueue* queue);
 void create_queues();
 void destroy_queues();
 
+/* system functions */
+int get_tty_port(ModemUSBPorts *ports);
+int init_port(struct pollfd *fds, char *device, struct termios *s_port, int vmin, int vtime);
 
+extern ModemUSBPorts modem_ports;
 extern int RUN;
