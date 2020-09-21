@@ -26,11 +26,31 @@
 #define TSLEEP 5
 #define MAX_SIZE 1024
 #define CMD_SIZE 256
+#define ARG_SIZE 64
 
 #define VMIN_USB 255
-#define VTIME_USB 5
+#define VTIME_USB 2
 
 #define DMESGLOG "/var/log/kern.log"
+
+/* General modem info */
+typedef struct CellularModemInfo {
+    unsigned int rssi;
+    unsigned int ber;
+    int cpin;
+    int creg;
+    int cgreg;
+    char cgmi[ARG_SIZE];
+    char cgmm[ARG_SIZE];
+    char cgmr[ARG_SIZE];
+    char cgsn[ARG_SIZE];
+    char cimi[ARG_SIZE];
+    char iccid[ARG_SIZE];
+    char cops[ARG_SIZE];
+    char netw[ARG_SIZE];
+} ModemInfo;
+
+ModemInfo modem_info;
 
 char at_usb_device[20];
 struct pollfd modemfd, serialfd;

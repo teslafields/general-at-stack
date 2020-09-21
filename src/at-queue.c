@@ -89,3 +89,15 @@ void displayQueue(ATQueue* queue)
     free(queue->cmd);
     free(queue);
 }
+
+/*
+void main() {
+    ATQueue *queue = createQueue(5);
+    enqueue(queue, "item1");
+    enqueue(queue, "ok");
+    char *s1 = dequeue(queue);
+    printf("%s \n", s1);
+    char *s2 = dequeue(queue);
+    printf("%s %s\n", s1, s2);
+}
+*/
