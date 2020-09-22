@@ -1,5 +1,5 @@
 PROGRAM=modemapp
-SRCS= main.c system.c at-control.c at-queue.c at-recv.c
+SRCS= main.c system.c at-control.c at-queue.c at-recv.c ppp_procedure.c
 OUTDIR=	../out
 PROGRAMPATH= $(addprefix $(OUTDIR)/, $(PROGRAM))
 

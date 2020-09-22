@@ -1,5 +1,5 @@
 #include "at-interface.h"
-#include "at-common.h"
+
 #if defined (SIM7600) && !defined (SIM7100)
 #include "SIM7600X-H.h"
 #endif
@@ -7,7 +7,7 @@
 #include "sim7100x.h"
 #endif
 
-enum modem_states {
+enum ModemStates {
     MODEM_OFF,
     ECHO_OFF,
     GET_CGMI,
@@ -30,13 +30,23 @@ enum modem_states {
     START_PPP,
     OK
 };
-enum modem_states modem_state;
+enum ModemProcedure {
+    SETUP,
+    DONE
+};
 
+/* Modem states */
+enum ModemStates modem_state = MODEM_OFF;
+enum ModemProcedure modem_procedure = SETUP;
+
+/* Global flags */
 int REQUEST = 0;
 int RETRIES = 3;
 
+struct timespec ts_cond_tout, ts_global_timer, ts_csq;
+ModemInfo modem_info;
+
 void decode_at_data();
-void do_wait(pthread_mutex_t *the_lock, pthread_cond_t *the_cond, unsigned int tsleep);
 
 
 void init_global() {
@@ -57,6 +67,16 @@ void log_modem_info() {
             modem_info.cgmi, modem_info.cgmm, modem_info.cgmr, modem_info.cgsn, 
             modem_info.cimi, modem_info.cpin, modem_info.iccid, modem_info.creg, 
             modem_info.cops, modem_info.rssi, modem_info.ber, modem_info.netw);
+}
+
+void sync_timers(struct timespec *ts_timer, struct timespec *ts_aux) {
+    ts_aux->tv_sec = ts_timer->tv_sec;
+    ts_aux->tv_nsec = ts_timer->tv_nsec;
+}
+
+void sync_all_timers() {
+    clock_gettime(CLOCK_MONOTONIC, &ts_global_timer);
+    sync_timers(&ts_global_timer, &ts_csq);
 }
 
 int write_at_data()
@@ -83,10 +103,25 @@ int write_at_data()
 
 void *at_control()
 {
+    unsigned long now, diff, bef;
     init_global();
+    sync_all_timers();
     while (RUN)
     {
+        clock_gettime(CLOCK_MONOTONIC, &ts_global_timer);
+        if (ppp_status.run)
+            check_ppp_process();
         decode_at_data();
+        if (modem_procedure == DONE) {
+            diff = ts_global_timer.tv_sec - ts_csq.tv_sec;
+            if (!ppp_status.run && modem_info.rssi > RSSI_MIN &&
+                    modem_info.rssi < RSSI_UKW)
+                modem_state = START_PPP;
+            else if (diff >= TCSQ) {
+                sync_timers(&ts_global_timer, &ts_csq);
+                modem_state = CHECK_CSQ;
+            }
+        }
         switch (modem_state)
         {
             case MODEM_OFF:
@@ -141,9 +176,10 @@ void *at_control()
                 sprintf(tx_modem, "AT%s=1,\"IP\",\"\"", ATCGDCONT);
                 break;
             case START_PPP:
-                printf("Starting START_PPPd\n");
-                system("/usr/sbin/START_PPPd call sim7100");
-                modem_state = MODEM_OFF;
+#ifdef PPP
+                pthread_cond_signal(&ppp_cond);
+#endif
+                modem_state = OK;
                 break;
             case LOG_INFO:
                 log_modem_info();
@@ -160,7 +196,7 @@ void *at_control()
         }
         else if (!RETRIES) {
         }
-        do_wait(&state_machine_lock, &state_machine_cond, 5);
+        do_wait(&state_machine_lock, &state_machine_cond, TSLEEP);
     }
     close(modemfd.fd);
     return NULL;
@@ -257,11 +293,14 @@ void decode_at_data()
                     sprintf(fmt, "%s: %%u,%%u", ATCSQ);
                     n = sscanf(payload, fmt, &modem_info.rssi, &modem_info.ber);
                     if (n == -1) {
-                        modem_info.rssi = 99;
-                        modem_info.ber = 99;
+                        modem_info.rssi = RSSI_UKW;
+                        modem_info.ber = RSSI_UKW;
                     }
                     if (strstr(last_sent_cmd, ATCSQ)) {
-                        modem_state = CHECK_COPS;
+                        if (modem_procedure == SETUP)
+                            modem_state = CHECK_COPS;
+                        else
+                            modem_state = OK;
                         reset_tx_flags(3);
                     }
                 }
@@ -324,6 +363,7 @@ void decode_at_data()
         }
         else if (strstr(last_sent_cmd, ATCGDCONT) && !strcmp(pch, ATOK)) {
             modem_state = LOG_INFO;
+            modem_procedure = DONE;
             reset_tx_flags(3);
         }
     }
@@ -334,9 +374,9 @@ void do_wait(pthread_mutex_t *the_lock, pthread_cond_t *the_cond, unsigned int t
     pthread_mutex_lock(the_lock);
     if (tsleep)
     {
-        clock_gettime(CLOCK_REALTIME, &ts_timeout);
-        ts_timeout.tv_sec += tsleep;
-        pthread_cond_timedwait(the_cond, the_lock, &ts_timeout);
+        clock_gettime(CLOCK_REALTIME, &ts_cond_tout);
+        ts_cond_tout.tv_sec += tsleep;
+        pthread_cond_timedwait(the_cond, the_lock, &ts_cond_tout);
     }
     else
         pthread_cond_wait(the_cond, the_lock);

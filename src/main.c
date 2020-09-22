@@ -1,7 +1,7 @@
 #include "at-interface.h"
 
 int RUN = 1;
-ModemUSBPorts modem_ports;
+ModemUSBPorts modem_ports = {0};
 
 void exit_error(const char *format, ...)
 {
@@ -11,7 +11,7 @@ void exit_error(const char *format, ...)
     va_end(args);
     if (modemfd.fd > 0)
         close(modemfd.fd);
-    exit(-1);
+    exit(1);
 }
 
 int main(int argc, char *argv[])
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     /*if (argc < 2)
         exit_error("provide a USB device\n");
     */
-    if (get_tty_port(&modem_ports) != 0)
+    if (get_tty_port(&modem_ports, 0) != 0)
         exit_error("USB ports error\n");
 
     pthread_t tid[2];
@@ -27,16 +27,23 @@ int main(int argc, char *argv[])
     info_queue = createQueue(10);
     
     char port[20] = {0};
-    snprintf(port, sizeof(port)-1, "/dev/ttyUSB%d", modem_ports.at);
+    sprintf(port, "/dev/ttyUSB%d", modem_ports.at);
     if (init_port(&modemfd, port, &s_portsettings[0], VMIN_USB, VTIME_USB) != 0)
         exit_error("Unable to open and setup TTY port!");
     if (pthread_create(&tid[0], NULL, read_at_data, NULL))
         exit_error("pthread_create read_at_data\n");
+#ifdef PPP
+    if (pthread_create(&tid[1], NULL, ppp_procedure, NULL))
+        exit_error("pthread_create read_at_data\n");
+#endif
 
     at_control();
 
     destroyQueue(rx_queue);
     destroyQueue(info_queue);
     pthread_join(tid[0], NULL);
+#ifdef PPP
+    pthread_join(tid[1], NULL);
+#endif
     return 0;
 }

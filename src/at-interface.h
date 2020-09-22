@@ -9,29 +9,39 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <signal.h>
+#include <ifaddrs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/sysinfo.h>
 #include <sys/ioctl.h>
 #include <linux/types.h>
-
-/* Modem model (defined in Makefile) */
-// #define SIM7600
+#include "at-common.h"
 
 #define ATDELIM "\r\n\r\n"
+
 /* Time values */
 #define NS 1000000000
 #define POLL_TOUT 3000
 #define TSLEEP 5
+#define TCSQ 30
+
+/* RSSI boundaries */
+#define RSSI_MIN 6
+#define RSSI_UKW 99
+
+/* Buffer sizes */
 #define MAX_SIZE 1024
 #define CMD_SIZE 256
 #define ARG_SIZE 64
 
+/* Termios configuration */
 #define VMIN_USB 255
 #define VTIME_USB 2
 
-#define DMESGLOG "/var/log/kern.log"
+#define DMESGLOG "/var/log/kern"
+#define RESOLV_CONF "/etc/resolv.conf"
 
 /* General modem info */
 typedef struct CellularModemInfo {
@@ -50,21 +60,7 @@ typedef struct CellularModemInfo {
     char netw[ARG_SIZE];
 } ModemInfo;
 
-ModemInfo modem_info;
 
-char at_usb_device[20];
-struct pollfd modemfd, serialfd;
-struct termios s_portsettings[2];
-struct timespec ts_timeout;
-
-/* Syncronization purpose */
-pthread_cond_t state_machine_cond;
-pthread_mutex_t state_machine_lock;
-
-/* I/O buffers */
-char rx_modem[MAX_SIZE];
-char tx_modem[CMD_SIZE];
-char last_sent_cmd[CMD_SIZE];
 
 /* Custom structs */
 typedef struct Queue
@@ -72,8 +68,7 @@ typedef struct Queue
     int front, rear, size, capacity;
     char** cmd;
 } ATQueue;
-ATQueue* rx_queue;
-ATQueue* info_queue;
+
 
 typedef struct USBPorts {
     int diag;
@@ -83,9 +78,34 @@ typedef struct USBPorts {
     int audio;
 } ModemUSBPorts;
 
+typedef struct PPPStatus {
+    int rc;
+    int run;
+    int dns_updated;
+} PPPStatus;
+
+struct pollfd modemfd;
+struct termios s_portsettings[2];
+
+
+/* Syncronization purpose */
+pthread_cond_t state_machine_cond, ppp_cond;
+pthread_mutex_t state_machine_lock, ppp_lock;
+
+/* I/O buffers */
+char rx_modem[MAX_SIZE];
+char tx_modem[CMD_SIZE];
+char last_sent_cmd[CMD_SIZE];
+
 /* AT functions */
 void *at_control();
 void *read_at_data();
+
+void do_wait(pthread_mutex_t *the_lock, pthread_cond_t *the_cond, unsigned int tsleep);
+
+/* PPP function */
+void *ppp_procedure();
+void check_ppp_process();
 
 /* Queue functions */
 ATQueue* createQueue(unsigned capacity);
@@ -100,8 +120,12 @@ void create_queues();
 void destroy_queues();
 
 /* system functions */
-int get_tty_port(ModemUSBPorts *ports);
+int get_tty_port(ModemUSBPorts *ports, int iteration);
 int init_port(struct pollfd *fds, char *device, struct termios *s_port, int vmin, int vtime);
 
+extern ATQueue* rx_queue;
+extern ATQueue* info_queue;
+extern ModemInfo modem_info;
 extern ModemUSBPorts modem_ports;
+extern PPPStatus ppp_status;
 extern int RUN;

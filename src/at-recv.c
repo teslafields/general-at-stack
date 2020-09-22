@@ -1,6 +1,9 @@
 #include "at-interface.h"
 
 
+ATQueue* rx_queue;
+ATQueue* info_queue;
+
 char* strtoke(char *str, const char *delim)
 {
     static char *start = NULL;

@@ -1,11 +1,17 @@
 #include "at-interface.h"
 
 
-int get_tty_port(ModemUSBPorts *ports){
-    FILE *fdmesg = fopen(DMESGLOG, "r");
+int get_tty_port(ModemUSBPorts *ports, int iteration){
+    static char fname[25] = {0};
+    if (!iteration)
+        sprintf(fname, "%s.log", DMESGLOG);
+    else
+        sprintf(fname, "%s.log.%d", DMESGLOG, iteration);
+    printf("opening %s\n", fname);
+    FILE *fdmesg = fopen(fname, "r");
     long size;
     if (!fdmesg) {
-        printf("Error opening %s\n", DMESGLOG);
+        printf("Error opening %s\n", fname);
         return -1;
     }
     if (fseek(fdmesg, 0, SEEK_END) != 0) {
@@ -27,14 +33,20 @@ int get_tty_port(ModemUSBPorts *ports){
         if (strstr(content, "GSM modem"))
             strcpy(filtered, content);
     }
-    printf("%s", filtered);
-    if (strstr(filtered, "disconnected from")) {
-        printf("TTY disconnected!\n");
-        return -1;
-    }
     char *pch = strstr(filtered, "ttyUSB");
     if (!pch) {
-        printf("TTY not found!\n");
+        if (iteration < 5) {
+            iteration++;
+            get_tty_port(ports, iteration);
+            if (ports->at)
+                return 0;
+        }
+        else
+            printf("TTY not found!\n");
+            return -1;
+    }
+    if (strstr(filtered, "disconnected from")) {
+        printf("TTY disconnected!\n");
         return -1;
     }
 #ifdef SIM7100

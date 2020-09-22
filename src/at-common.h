@@ -1,3 +1,6 @@
+#ifndef COMMON_H
+#define COMMON_H
+
 #define ATOK    "OK"
 #define ATERR   "ERROR"
 #define AT      "AT"
@@ -10,3 +13,5 @@
 #define ATCGMR  "+CGMR"
 #define ATCGSN  "+CGSN"
 #define ATCIMI  "+CIMI"
+
+#endif
