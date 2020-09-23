@@ -64,11 +64,12 @@ void *read_at_data()
             }
             else
             {
-                printf("read() error\n");
+                printf("Broken channel, read() error\n");
                 RUN = 0;
                 break;
             }
         }
     }
+    printf("Exiting read_at_data()\n");
     return NULL;
 }

@@ -8,6 +8,8 @@
 #define ATCOPS      "+COPS"
 #define ATCGREG     "+CGREG"
 #define ATCGDCONT   "+CGDCONT"
+#define ATRST       "+CRESET"
+#define ATPOF       "+CPOF"
 
 const char* networks[] = {
     "no service",

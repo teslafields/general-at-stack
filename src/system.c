@@ -1,6 +1,30 @@
 #include "at-interface.h"
 
 
+int get_tty_port_script(ModemUSBPorts *ports) {
+    FILE *fsim;
+    int ret, start, num;
+    char result[ARG_SIZE] = {0};
+#ifdef SIM7100
+    fsim = popen("/usr/bin/simdevs", "r");
+    ret = fread(result, 1, ARG_SIZE, fsim);
+    pclose(fsim);
+    if (!ret)
+        return -1;
+    ret = sscanf(result, "%d %d", &start, &num);
+    if (ret < 2)
+        return -1;
+    ports->diag = start;
+    ports->gps = ports->diag + 1;
+    ports->at = ports->gps + 1;
+    ports->ppp = ports->at + 1;
+    ports->audio = ports->ppp + 1;
+    printf("diag=ttyUSB%d, gps=ttyUSB%d, at=ttyUSB%d, ppp=ttyUSB%d, audio=ttyUSB%d\n", 
+            ports->diag, ports->gps, ports->at, ports->ppp, ports->audio);
+#endif
+    return 0;
+}
+
 int get_tty_port(ModemUSBPorts *ports, int iteration){
     static char fname[25] = {0};
     if (!iteration)

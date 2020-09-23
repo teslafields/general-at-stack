@@ -31,6 +31,9 @@
 #define RSSI_MIN 6
 #define RSSI_UKW 99
 
+/* Hysteresis */
+#define PPP_HYST 2
+
 /* Buffer sizes */
 #define MAX_SIZE 1024
 #define CMD_SIZE 256
@@ -43,7 +46,7 @@
 #define DMESGLOG "/var/log/kern"
 #define RESOLV_CONF "/etc/resolv.conf"
 
-/* General modem info */
+/* General modem structs */
 typedef struct CellularModemInfo {
     unsigned int rssi;
     unsigned int ber;
@@ -60,7 +63,12 @@ typedef struct CellularModemInfo {
     char netw[ARG_SIZE];
 } ModemInfo;
 
-
+typedef struct CellularModemFlags {
+    unsigned char ring;
+    unsigned char sms;
+    unsigned char pof;
+    unsigned char rst;
+} ModemFlags;
 
 /* Custom structs */
 typedef struct Queue
@@ -105,7 +113,7 @@ void do_wait(pthread_mutex_t *the_lock, pthread_cond_t *the_cond, unsigned int t
 
 /* PPP function */
 void *ppp_procedure();
-void check_ppp_process();
+int check_ppp_process();
 
 /* Queue functions */
 ATQueue* createQueue(unsigned capacity);
@@ -120,6 +128,7 @@ void create_queues();
 void destroy_queues();
 
 /* system functions */
+int get_tty_port_script(ModemUSBPorts *ports);
 int get_tty_port(ModemUSBPorts *ports, int iteration);
 int init_port(struct pollfd *fds, char *device, struct termios *s_port, int vmin, int vtime);
 
@@ -129,3 +138,4 @@ extern ModemInfo modem_info;
 extern ModemUSBPorts modem_ports;
 extern PPPStatus ppp_status;
 extern int RUN;
+extern int EXIT;

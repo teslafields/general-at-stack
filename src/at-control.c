@@ -28,10 +28,13 @@ enum ModemStates {
     LOG_INFO,
     SET_CGDCONT,
     START_PPP,
+    HANGUP,
+    POWER_OFF,
     OK
 };
 enum ModemProcedure {
     SETUP,
+    WAIT,
     DONE
 };
 
@@ -45,12 +48,22 @@ int RETRIES = 3;
 
 struct timespec ts_cond_tout, ts_global_timer, ts_csq;
 ModemInfo modem_info;
+ModemFlags modem_flags;
 
 void decode_at_data();
 
 
 void init_global() {
     memset(&modem_info, 0, sizeof(modem_info));
+}
+
+void exit_control() {
+    EXIT = 1;
+    modem_state = OK;
+    modem_procedure = WAIT;
+#ifdef PPP
+    pthread_cond_signal(&ppp_cond);
+#endif
 }
 
 void reset_tx_flags(int mask) {
@@ -103,27 +116,41 @@ int write_at_data()
 
 void *at_control()
 {
-    unsigned long now, diff, bef;
+    unsigned long diff;
+    short ppp_hyst = 0;
     init_global();
     sync_all_timers();
-    while (RUN)
-    {
+    while (RUN) {
         clock_gettime(CLOCK_MONOTONIC, &ts_global_timer);
-        if (ppp_status.run)
-            check_ppp_process();
+        if (ppp_status.run) {
+            if (ppp_hyst >= PPP_HYST) {
+                if (check_ppp_process())
+                    ppp_hyst = 0;
+            }
+            else
+                ppp_hyst++;
+        }
+
+        /* Decode AT events */
         decode_at_data();
-        if (modem_procedure == DONE) {
+
+        if (modem_flags.pof) {
+            modem_state = POWER_OFF;
+            reset_tx_flags(3);
+        }
+        else if (modem_procedure == DONE) {
             diff = ts_global_timer.tv_sec - ts_csq.tv_sec;
-            if (!ppp_status.run && modem_info.rssi > RSSI_MIN &&
+            if (modem_flags.ring)
+                modem_state = HANGUP;
+            else if (!ppp_status.run && modem_info.rssi > RSSI_MIN &&
                     modem_info.rssi < RSSI_UKW)
                 modem_state = START_PPP;
             else if (diff >= TCSQ) {
                 sync_timers(&ts_global_timer, &ts_csq);
-                modem_state = CHECK_CSQ;
+                modem_state = GET_NETWORK;
             }
         }
-        switch (modem_state)
-        {
+        switch (modem_state) {
             case MODEM_OFF:
                 strcpy(tx_modem, AT);
                 break;
@@ -185,6 +212,12 @@ void *at_control()
                 log_modem_info();
                 modem_state = OK;
                 break;
+            case HANGUP:
+                strcpy(tx_modem, ATH);
+                break;
+            case POWER_OFF:
+                sprintf(tx_modem, "AT%s", ATPOF);
+                break;
             case OK:
                 break;
             default:
@@ -195,10 +228,13 @@ void *at_control()
             write_at_data();
         }
         else if (!RETRIES) {
+            printf("RETRIES exceed, powering off\n");
+            modem_flags.pof = 1;
         }
         do_wait(&state_machine_lock, &state_machine_cond, TSLEEP);
     }
     close(modemfd.fd);
+    printf("Exiting at_control()\n");
     return NULL;
 }
 
@@ -212,6 +248,8 @@ void decode_at_data()
         if (strcmp(pch, ATOK) && strcmp(pch, ATERR)) {
             if (!strcmp(pch, AT) || !strcmp(pch, ATE))
                 decode_at_data();
+            else if (!strcmp(pch, ATRING))
+                modem_flags.ring = 1;
             else if (strstr(pch, ATCPIN)) {
                 if (strstr(pch, "READY") && !strcmp(dequeue(rx_queue), ATOK)) {
                     modem_info.cpin = 1; 
@@ -267,6 +305,9 @@ void decode_at_data()
                             case 4:
                                 modem_state = MODEM_OFF;
                                 break;
+                            case 2:
+                                reset_tx_flags(1);
+                                sleep(10);
                             default:
                                 break;
                         }
@@ -365,6 +406,17 @@ void decode_at_data()
             modem_state = LOG_INFO;
             modem_procedure = DONE;
             reset_tx_flags(3);
+        }
+        else if (!strcmp(last_sent_cmd, ATH)) {
+            modem_state = OK;
+            reset_tx_flags(3);
+        }
+        else if (strstr(last_sent_cmd, ATPOF)) {
+            if (!strcmp(pch, ATOK)) {
+                exit_control();
+                if (modem_flags.pof)
+                    modem_flags.pof = 0;
+            }
         }
     }
 }

@@ -8,6 +8,7 @@
 #define ATE     "ATE0"
 #define ATD     "ATD"
 #define ATH     "ATH"
+#define ATRING  "RING"
 #define ATCGMI  "+CGMI"
 #define ATCGMM  "+CGMM"
 #define ATCGMR  "+CGMR"

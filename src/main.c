@@ -1,6 +1,7 @@
 #include "at-interface.h"
 
 int RUN = 1;
+int EXIT = 0;
 ModemUSBPorts modem_ports = {0};
 
 void exit_error(const char *format, ...)
@@ -19,7 +20,7 @@ int main(int argc, char *argv[])
     /*if (argc < 2)
         exit_error("provide a USB device\n");
     */
-    if (get_tty_port(&modem_ports, 0) != 0)
+    if (get_tty_port_script(&modem_ports) != 0)
         exit_error("USB ports error\n");
 
     pthread_t tid[2];
@@ -45,5 +46,7 @@ int main(int argc, char *argv[])
 #ifdef PPP
     pthread_join(tid[1], NULL);
 #endif
+    if (EXIT)
+        sleep(5);
     return 0;
 }

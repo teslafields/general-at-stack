@@ -20,5 +20,8 @@
 #define INIT        18  // The init script failed (returned a non-zero exit status).
 #define POSAUTH     19  // We failed to authenticate ourselves to the peer.
 
+#define DNS1 "nameserver 8.8.8.8\n"
+#define DNS2 "nameserver 8.8.4.4\n"
+
 #define PPP_RESOLV "/etc/ppp/resolv.conf"
 
