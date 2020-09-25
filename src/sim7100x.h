@@ -1,3 +1,6 @@
+#ifndef SIM100X_H
+#define SIM100X_H
+
 #define ATURC       "AT+CATR"
 #define ATCPIN      "+CPIN"
 #define ATICCID     "+ICCID"
@@ -10,22 +13,11 @@
 #define ATCGDCONT   "+CGDCONT"
 #define ATRST       "+CRESET"
 #define ATPOF       "+CPOF"
+#define ATGPS       "+CGPS"
+#define ATGPSINFO   "+CGPSINFO"
 
-const char* networks[] = {
-    "no service",
-    "GSM",
-    "GPRS",
-    "EDGE",
-    "WCDMA",
-    "HSDPA",
-    "HSUPA",
-    "HSPA",
-    "LTE",
-    "TDS-CDMA",
-    "TDS-HSDPA",
-    "TDS-HSUPA",
-    "TDS-HSPA",
-    "CDMA",
-    "EVDO",
-    "HYBRID"
-};
+#define NETW_LEN 16
+
+extern const char* networks[NETW_LEN];
+
+#endif

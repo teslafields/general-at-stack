@@ -21,6 +21,8 @@ enum ModemStates {
 #ifdef SIM7100
     GET_UEINFO,
     GET_NETWORK,
+    SET_GPS,
+    GET_GPSINFO,
 #endif
     CHECK_CSQ,
     CHECK_COPS,
@@ -46,15 +48,18 @@ enum ModemProcedure modem_procedure = SETUP;
 int REQUEST = 0;
 int RETRIES = 3;
 
-struct timespec ts_cond_tout, ts_global_timer, ts_csq;
+struct timespec ts_cond_tout, ts_global_timer, ts_csq, ts_gps;
 ModemInfo modem_info;
 ModemFlags modem_flags;
+GPSInfo gps_info;
 
 void decode_at_data();
 
 
 void init_global() {
     memset(&modem_info, 0, sizeof(modem_info));
+    memset(&modem_flags, 0, sizeof(modem_flags));
+    memset(&gps_info, 0, sizeof(gps_info));
 }
 
 void exit_control() {
@@ -90,6 +95,7 @@ void sync_timers(struct timespec *ts_timer, struct timespec *ts_aux) {
 void sync_all_timers() {
     clock_gettime(CLOCK_MONOTONIC, &ts_global_timer);
     sync_timers(&ts_global_timer, &ts_csq);
+    sync_timers(&ts_global_timer, &ts_gps);
 }
 
 int write_at_data()
@@ -139,15 +145,23 @@ void *at_control()
             reset_tx_flags(3);
         }
         else if (modem_procedure == DONE) {
-            diff = ts_global_timer.tv_sec - ts_csq.tv_sec;
+
             if (modem_flags.ring)
                 modem_state = HANGUP;
+#ifdef PPP
             else if (!ppp_status.run && modem_info.rssi > RSSI_MIN &&
                     modem_info.rssi < RSSI_UKW)
                 modem_state = START_PPP;
-            else if (diff >= TCSQ) {
-                sync_timers(&ts_global_timer, &ts_csq);
-                modem_state = GET_NETWORK;
+#endif
+            else {
+                if (ts_global_timer.tv_sec - ts_gps.tv_sec >= TGPS) {
+                    sync_timers(&ts_global_timer, &ts_gps);
+                    modem_state = GET_GPSINFO;
+                }
+                else if (ts_global_timer.tv_sec - ts_csq.tv_sec >= TCSQ) {
+                    sync_timers(&ts_global_timer, &ts_csq);
+                    modem_state = GET_NETWORK;
+                }
             }
         }
         switch (modem_state) {
@@ -169,6 +183,11 @@ void *at_control()
             case GET_CGSN:
                 sprintf(tx_modem, "AT%s", ATCGSN);
                 break;
+#ifdef SIM7100
+            case SET_GPS:
+                sprintf(tx_modem, "AT%s=1,1", ATGPS);
+                break;
+#endif
             case GET_CIMI:
                 sprintf(tx_modem, "AT%s", ATCIMI);
                 break;
@@ -192,7 +211,10 @@ void *at_control()
             case GET_NETWORK:
                 sprintf(tx_modem, "AT%s?", ATCNSMOD);
                 break;
+            case GET_GPSINFO:
+                sprintf(tx_modem, "AT%s", ATGPSINFO);
 #endif
+                break;
             case CHECK_CSQ:
                 sprintf(tx_modem, "AT%s", ATCSQ);
                 break;
@@ -340,8 +362,13 @@ void decode_at_data()
                     if (strstr(last_sent_cmd, ATCSQ)) {
                         if (modem_procedure == SETUP)
                             modem_state = CHECK_COPS;
-                        else
+                        else {
+#ifdef REPORT_AGENT
+                            report_csq_to_agent(modem_info.rssi, modem_info.ber,
+                                    modem_info.netw);
+#endif
                             modem_state = OK;
+                        }
                         reset_tx_flags(3);
                     }
                 }
@@ -356,6 +383,22 @@ void decode_at_data()
                     }
                 }
             }
+#ifdef SIM7100
+            else if (strstr(pch, ATGPSINFO)) {
+                if (!strcmp(dequeue(rx_queue), ATOK)) {
+                    sprintf(fmt, "%s: %%lf,%%c,%%lf,%%c,%%u,%%u.%%*d,%%f,%%f,%%d", ATGPSINFO);
+                    n = sscanf(payload, fmt, &gps_info.latraw, &gps_info.latdir, &gps_info.lngraw,
+                            &gps_info.lngdir, &gps_info.date, &gps_info.time, &gps_info.alt,
+                            &gps_info.speed, &gps_info.course);
+                    if (n) {
+                        printf("LAT[%lf,%c] LNG[%lf,%c] ALT[%.1f]\n", gps_info.latraw, gps_info.latdir,
+                                gps_info.lngraw, gps_info.lngdir, gps_info.alt);
+                    }
+                }
+                modem_state = OK;
+                reset_tx_flags(3);
+            }
+#endif
             else if (strstr(last_sent_cmd, ATCGMI)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
                     modem_state = GET_CGMM;
@@ -379,7 +422,11 @@ void decode_at_data()
             }
             else if (strstr(last_sent_cmd, ATCGSN)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
+#ifdef SIM7100
+                    modem_state = SET_GPS;
+#else
                     modem_state = GET_CIMI;
+#endif
                     reset_tx_flags(3);
                     strncpy(modem_info.cgsn, payload, ARG_SIZE-1);
                 }
@@ -394,6 +441,7 @@ void decode_at_data()
             else
                 decode_at_data();
         }
+        /* Commands that return OK or ERROR should be handled here */
         else if (!strcmp(last_sent_cmd, AT) && !strcmp(pch, ATOK)) {
             modem_state = ECHO_OFF;
             reset_tx_flags(3);
@@ -402,6 +450,15 @@ void decode_at_data()
             modem_state = GET_CGMI;
             reset_tx_flags(3);
         }
+#ifdef SIM7100
+        else if (strstr(last_sent_cmd, ATGPS)) {
+            if (strcmp(pch, ATOK)) {
+                printf("Error setting GPS\n");
+            }
+            modem_state = GET_CIMI;
+            reset_tx_flags(3);
+        }
+#endif
         else if (strstr(last_sent_cmd, ATCGDCONT) && !strcmp(pch, ATOK)) {
             modem_state = LOG_INFO;
             modem_procedure = DONE;

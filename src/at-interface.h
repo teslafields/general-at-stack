@@ -25,6 +25,7 @@
 #define NS 1000000000
 #define POLL_TOUT 3000
 #define TSLEEP 5
+#define TGPS 45
 #define TCSQ 30
 
 /* RSSI boundaries */
@@ -45,6 +46,7 @@
 
 #define DMESGLOG "/var/log/kern"
 #define RESOLV_CONF "/etc/resolv.conf"
+#define INFO_AGENT "/var/lib/losant-edge-agent/data/modem_info.json"
 
 /* General modem structs */
 typedef struct CellularModemInfo {
@@ -69,6 +71,22 @@ typedef struct CellularModemFlags {
     unsigned char pof;
     unsigned char rst;
 } ModemFlags;
+
+typedef struct ModemGPSInfo {
+    double latraw;
+    int latdd;
+    double latmm;
+    char latdir;
+    double lngraw;
+    int lngdd;
+    double lngmm;
+    char lngdir;
+    unsigned date;
+    unsigned time;
+    float alt;
+    float speed;
+    int course;
+} GPSInfo;
 
 /* Custom structs */
 typedef struct Queue
@@ -131,11 +149,13 @@ void destroy_queues();
 int get_tty_port_script(ModemUSBPorts *ports);
 int get_tty_port(ModemUSBPorts *ports, int iteration);
 int init_port(struct pollfd *fds, char *device, struct termios *s_port, int vmin, int vtime);
+void report_csq_to_agent(unsigned int rssi, unsigned int ber, char *network);
 
 extern ATQueue* rx_queue;
 extern ATQueue* info_queue;
 extern ModemInfo modem_info;
 extern ModemUSBPorts modem_ports;
+extern GPSInfo gps_info;
 extern PPPStatus ppp_status;
 extern int RUN;
 extern int EXIT;

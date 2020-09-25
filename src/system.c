@@ -107,3 +107,24 @@ int init_port(struct pollfd *fds, char *device, struct termios *s_port, int vmin
         return -1;
     return 0;
 }
+
+char* get_str_timestamp(time_t timeref)
+{
+    struct tm* tm_info;
+    static char string_time[26];
+    time_t stime = timeref;
+    if (!stime)
+        time(&stime);
+    tm_info = localtime(&stime);
+    strftime(string_time, sizeof(string_time), "%Y-%m-%dT%H:%M:%S.000Z", tm_info);
+    return string_time;
+}
+
+void report_csq_to_agent(unsigned int rssi, unsigned int ber, char *network) {
+    FILE *fjson = fopen(INFO_AGENT, "w");
+    if (!fjson)
+        return;
+    fprintf(fjson, "{\"rssi\":%u,\"ber\":%u,\"network\":\"%s\",\"ts\":\"%s\"}",
+            rssi, ber, network, get_str_timestamp(time(NULL)));
+    fclose(fjson);
+}

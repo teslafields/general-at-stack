@@ -17,9 +17,10 @@ void exit_error(const char *format, ...)
 
 int main(int argc, char *argv[])
 {
-    /*if (argc < 2)
-        exit_error("provide a USB device\n");
-    */
+    /* This is used for systemd log */
+    setbuf(stdout, NULL);
+
+    printf("MODEM-APP start up\n");
     if (get_tty_port_script(&modem_ports) != 0)
         exit_error("USB ports error\n");
 
