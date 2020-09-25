@@ -1,0 +1,9 @@
+#!/bin/bash
+
+ppp_stats=/var/log/ppp_stats.log
+
+if ! [ -f $ppp_stats ]; then
+    touch $ppp_stats
+fi
+echo "$BYTES_SENT $BYTES_RCVD $((BYTES_SENT+BYTES_RCVD))" >> /var/log/ppp_stats.log
+

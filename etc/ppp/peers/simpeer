@@ -1,0 +1,13 @@
+115200
+nocrtscts
+noauth
+connect '/usr/sbin/chat -v -s -f /etc/ppp/simchat'
+disconnect '/usr/sbin/chat -e -v "" +++ath'
+debug
+usepeerdns
+defaultroute
+nodetach
+#ipcp-accept-local
+#ipcp-accept-remote
+lcp-echo-failure 10
+lcp-echo-interval 5
