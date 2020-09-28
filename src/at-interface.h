@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <ifaddrs.h>
+#include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -25,8 +26,9 @@
 #define NS 1000000000
 #define POLL_TOUT 3000
 #define TSLEEP 5
-#define TGPS 45
-#define TCSQ 30
+#define TGPS 15
+#define TCSQ 10
+#define TINFO 20
 
 /* RSSI boundaries */
 #define RSSI_MIN 6
@@ -37,32 +39,35 @@
 
 /* Buffer sizes */
 #define MAX_SIZE 1024
-#define CMD_SIZE 256
-#define ARG_SIZE 64
+#define CMD_SIZE (MAX_SIZE>>2)
+#define ARG_SIZE (CMD_SIZE>>2)
+#define CHK_SIZE ((ARG_SIZE>>1)-8)
 
 /* Termios configuration */
 #define VMIN_USB 255
 #define VTIME_USB 2
 
+/* Socket path */
+#define UCLISOCKPATH "/run/core-app.sock"
 #define DMESGLOG "/var/log/kern"
 #define RESOLV_CONF "/etc/resolv.conf"
 #define INFO_AGENT "/var/lib/losant-edge-agent/data/modem_info.json"
 
 /* General modem structs */
 typedef struct CellularModemInfo {
-    unsigned int rssi;
-    unsigned int ber;
+    unsigned rssi;
+    unsigned ber;
     int cpin;
     int creg;
     int cgreg;
-    char cgmi[ARG_SIZE];
-    char cgmm[ARG_SIZE];
-    char cgmr[ARG_SIZE];
-    char cgsn[ARG_SIZE];
-    char cimi[ARG_SIZE];
-    char iccid[ARG_SIZE];
-    char cops[ARG_SIZE];
-    char netw[ARG_SIZE];
+    char cgmi[CHK_SIZE];
+    char cgmm[CHK_SIZE];
+    char cgmr[CHK_SIZE];
+    char cgsn[CHK_SIZE];
+    char cimi[CHK_SIZE];
+    char iccid[CHK_SIZE];
+    char cops[CHK_SIZE];
+    char netw[12];
 } ModemInfo;
 
 typedef struct CellularModemFlags {
@@ -72,20 +77,23 @@ typedef struct CellularModemFlags {
     unsigned char rst;
 } ModemFlags;
 
+/* GPS sturct */
 typedef struct ModemGPSInfo {
-    double latraw;
-    int latdd;
-    double latmm;
+    unsigned latdd;
+    unsigned latmm;
+    float latss;
     char latdir;
-    double lngraw;
-    int lngdd;
-    double lngmm;
+    unsigned lngdd;
+    unsigned lngmm;
+    float lngss;
     char lngdir;
-    unsigned date;
-    unsigned time;
     float alt;
     float speed;
+    unsigned date;
+    unsigned time;
     int course;
+    double latraw;
+    double lngraw;
 } GPSInfo;
 
 /* Custom structs */
@@ -151,6 +159,12 @@ int get_tty_port(ModemUSBPorts *ports, int iteration);
 int init_port(struct pollfd *fds, char *device, struct termios *s_port, int vmin, int vtime);
 void report_csq_to_agent(unsigned int rssi, unsigned int ber, char *network);
 
+/* unix client functions */
+int ucli_create_socket();
+int ucli_send_data(void *data, unsigned size);
+void ucli_close_socket();
+int ucli_connect_and_send(void *data, unsigned size);
+
 extern ATQueue* rx_queue;
 extern ATQueue* info_queue;
 extern ModemInfo modem_info;
@@ -159,3 +173,4 @@ extern GPSInfo gps_info;
 extern PPPStatus ppp_status;
 extern int RUN;
 extern int EXIT;
+extern int UCLISOCK;

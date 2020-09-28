@@ -1,5 +1,5 @@
 PROGRAM=modemapp
-SRCS= main.c system.c at-control.c at-queue.c at-recv.c ppp_procedure.c sim7100x.c
+SRCS= main.c system.c at-control.c at-queue.c at-recv.c ppp_procedure.c sim7100x.c unix_client.c
 OUTDIR=	../out
 PROGRAMPATH= $(addprefix $(OUTDIR)/, $(PROGRAM))
 
@@ -7,7 +7,7 @@ CC?= $(CROSS_COMPILE)gcc
 CFLAGS?=
 LDFLAGS?=
 LIBS?=
-define?=-D SIM7100 -D PPP -D REPORT_AGENT
+define?=-D SIM7100 -D REPORT_AGENT -D UNIX_CLI
 WARN?=
 ifeq ($(WARN),full)
 WARNINGS= -W -Wall -ansi -Wextra -pedantic -Wstrict-overflow=5 -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wunused-variable
@@ -15,7 +15,7 @@ else
 WARNINGS= -W -Wall
 endif
 
-LINKER= -lpthread
+LINKER= -lpthread -lm
 
 DEBUG= -ggdb
 

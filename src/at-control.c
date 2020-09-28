@@ -1,11 +1,14 @@
 #include "at-interface.h"
-
 #if defined (SIM7600) && !defined (SIM7100)
 #include "SIM7600X-H.h"
 #endif
 #if defined (SIM7100) && !defined (SIM7600)
 #include "sim7100x.h"
 #endif
+
+#define UCLI_H_LEN 2
+#define GPS_PKG_LEN (sizeof(unsigned)*4+sizeof(char)*2+sizeof(float)*4)
+#define UCLI_PKG_LEN (sizeof(ModemInfo)+GPS_PKG_LEN+UCLI_H_LEN)
 
 enum ModemStates {
     MODEM_OFF,
@@ -21,6 +24,7 @@ enum ModemStates {
 #ifdef SIM7100
     GET_UEINFO,
     GET_NETWORK,
+    CHECK_GPS,
     SET_GPS,
     GET_GPSINFO,
 #endif
@@ -48,7 +52,7 @@ enum ModemProcedure modem_procedure = SETUP;
 int REQUEST = 0;
 int RETRIES = 3;
 
-struct timespec ts_cond_tout, ts_global_timer, ts_csq, ts_gps;
+struct timespec ts_cond_tout, ts_global_timer, ts_csq, ts_gps, ts_info;
 ModemInfo modem_info;
 ModemFlags modem_flags;
 GPSInfo gps_info;
@@ -87,6 +91,19 @@ void log_modem_info() {
             modem_info.cops, modem_info.rssi, modem_info.ber, modem_info.netw);
 }
 
+void convert_gps_coordinates(int type, GPSInfo *inf) {
+    switch (type) {
+        case 0:
+            inf->latdd = inf->latraw/100;
+            inf->lngdd = inf->lngraw/100;
+            inf->latmm = ((int) inf->latraw)%100;
+            inf->lngmm = ((int) inf->lngraw)%100;
+            inf->latss = (float) 60*(inf->latraw - floor(inf->latraw));
+            inf->lngss = (float) 60*(inf->latraw - floor(inf->latraw));
+            break;
+    }
+}
+
 void sync_timers(struct timespec *ts_timer, struct timespec *ts_aux) {
     ts_aux->tv_sec = ts_timer->tv_sec;
     ts_aux->tv_nsec = ts_timer->tv_nsec;
@@ -96,6 +113,7 @@ void sync_all_timers() {
     clock_gettime(CLOCK_MONOTONIC, &ts_global_timer);
     sync_timers(&ts_global_timer, &ts_csq);
     sync_timers(&ts_global_timer, &ts_gps);
+    sync_timers(&ts_global_timer, &ts_info);
 }
 
 int write_at_data()
@@ -124,6 +142,8 @@ void *at_control()
 {
     unsigned long diff;
     short ppp_hyst = 0;
+    int n;
+    char ucli_tx[UCLI_PKG_LEN] = {0};
     init_global();
     sync_all_timers();
     while (RUN) {
@@ -154,7 +174,34 @@ void *at_control()
                 modem_state = START_PPP;
 #endif
             else {
+#ifdef UNIX_CLI
+                if (ts_global_timer.tv_sec - ts_info.tv_sec >= TINFO) {
+                    ucli_tx[0] = '!'; // start byte
+                    ucli_tx[1] = 10; // command code 10: "modem info"
+                    n = sizeof(modem_info);
+                    memcpy(ucli_tx+UCLI_H_LEN, &modem_info, n);
+                    n += UCLI_H_LEN;
+                    if (gps_info.date > 0) {
+                        memcpy(ucli_tx+n, &gps_info, GPS_PKG_LEN); 
+                        n += GPS_PKG_LEN;
+                    }
+                    if ((n = ucli_connect_and_send(ucli_tx, n)) <= 0) {
+                        if (n == -2) 
+                            printf("Connect(%s) failed\n", UCLISOCKPATH);
+                        else if (n == -1)
+                            printf("Write(%s) error\n", UCLISOCKPATH);
+                        else
+                            printf("Partial write, total bytes: %d\n", n);
+
+                    }
+                    else
+                        printf("ucli: successfully sent %d bytes\n", n);
+                    sync_timers(&ts_global_timer, &ts_info);
+                }
+                else if (ts_global_timer.tv_sec - ts_gps.tv_sec >= TGPS) {
+#else
                 if (ts_global_timer.tv_sec - ts_gps.tv_sec >= TGPS) {
+#endif
                     sync_timers(&ts_global_timer, &ts_gps);
                     modem_state = GET_GPSINFO;
                 }
@@ -184,6 +231,9 @@ void *at_control()
                 sprintf(tx_modem, "AT%s", ATCGSN);
                 break;
 #ifdef SIM7100
+            case CHECK_GPS:
+                sprintf(tx_modem, "AT%s?", ATGPS);
+                break;
             case SET_GPS:
                 sprintf(tx_modem, "AT%s=1,1", ATGPS);
                 break;
@@ -287,7 +337,7 @@ void decode_at_data()
             }
             else if (strstr(pch, ATCGMR)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
-                    strncpy(modem_info.cgmr, payload+strlen(ATCGMR)+2, ARG_SIZE-1);
+                    strncpy(modem_info.cgmr, payload+strlen(ATCGMR)+2, CHK_SIZE-1);
                     if (strstr(last_sent_cmd, ATCGMR)) {
                         modem_state = GET_CGSN;
                         reset_tx_flags(3);
@@ -298,7 +348,7 @@ void decode_at_data()
             }
             else if (strstr(pch, ATICCID)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
-                    strncpy(modem_info.iccid, payload+strlen(ATICCID)+2, ARG_SIZE-1);
+                    strncpy(modem_info.iccid, payload+strlen(ATICCID)+2, CHK_SIZE-1);
                     if (strstr(last_sent_cmd, "ICCID")) {
                         modem_state = CHECK_CREG;
                         reset_tx_flags(3);
@@ -375,7 +425,7 @@ void decode_at_data()
             }
             else if (strstr(pch, ATCOPS)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
-                    sprintf(fmt, "%s: %%*d,%%*d,%%[^,]", ATCOPS);
+                    sprintf(fmt, "%s: %%*d,%%*d,%%%d[^,]", ATCOPS, CHK_SIZE);
                     n = sscanf(payload, fmt, modem_info.cops); 
                     if (strstr(last_sent_cmd, ATCOPS)) {
                         modem_state = SET_CGDCONT;
@@ -385,17 +435,31 @@ void decode_at_data()
             }
 #ifdef SIM7100
             else if (strstr(pch, ATGPSINFO)) {
+                memset(&gps_info, 0, sizeof(gps_info));
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
                     sprintf(fmt, "%s: %%lf,%%c,%%lf,%%c,%%u,%%u.%%*d,%%f,%%f,%%d", ATGPSINFO);
                     n = sscanf(payload, fmt, &gps_info.latraw, &gps_info.latdir, &gps_info.lngraw,
                             &gps_info.lngdir, &gps_info.date, &gps_info.time, &gps_info.alt,
                             &gps_info.speed, &gps_info.course);
                     if (n) {
-                        printf("LAT[%lf,%c] LNG[%lf,%c] ALT[%.1f]\n", gps_info.latraw, gps_info.latdir,
-                                gps_info.lngraw, gps_info.lngdir, gps_info.alt);
+                        convert_gps_coordinates(0, &gps_info);
+                        printf("%u°%u'%.2f\"%c %u°%u'%.2f\"%c %.2f %.2f\n", gps_info.latdd, gps_info.latmm, gps_info.latss, gps_info.latdir, gps_info.lngdd, gps_info.lngmm, gps_info.lngss, gps_info.lngdir, gps_info.alt, gps_info.speed);
                     }
                 }
                 modem_state = OK;
+                reset_tx_flags(3);
+            }
+            else if (strstr(pch, ATGPS)) {
+                if (!strcmp(dequeue(rx_queue), ATOK)) {
+                    sprintf(fmt, "%s: %%d", ATGPS);
+                    n = sscanf(payload, fmt, &dummy);
+                    if (n && dummy)
+                        modem_state = GET_CIMI;
+                    else
+                        modem_state = SET_GPS;
+                }
+                else
+                    modem_state = SET_GPS;
                 reset_tx_flags(3);
             }
 #endif
@@ -403,39 +467,39 @@ void decode_at_data()
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
                     modem_state = GET_CGMM;
                     reset_tx_flags(3);
-                    strncpy(modem_info.cgmi, payload, ARG_SIZE-1);
+                    strncpy(modem_info.cgmi, payload, CHK_SIZE-1);
                 }
             }
             else if (strstr(last_sent_cmd, ATCGMM)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
                     modem_state = GET_CGMR;
                     reset_tx_flags(3);
-                    strncpy(modem_info.cgmm, payload, ARG_SIZE-1);
+                    strncpy(modem_info.cgmm, payload, CHK_SIZE-1);
                 }
             }
             else if (strstr(last_sent_cmd, ATCGMR)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
                     modem_state = GET_CGSN;
                     reset_tx_flags(3);
-                    strncpy(modem_info.cgmr, payload+strlen(ATCGMR)+2, ARG_SIZE-1);
+                    strncpy(modem_info.cgmr, payload+strlen(ATCGMR)+2, CHK_SIZE-1);
                 }
             }
             else if (strstr(last_sent_cmd, ATCGSN)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
 #ifdef SIM7100
-                    modem_state = SET_GPS;
+                    modem_state = CHECK_GPS;
 #else
                     modem_state = GET_CIMI;
 #endif
                     reset_tx_flags(3);
-                    strncpy(modem_info.cgsn, payload, ARG_SIZE-1);
+                    strncpy(modem_info.cgsn, payload, CHK_SIZE-1);
                 }
             }
             else if (strstr(last_sent_cmd, ATCIMI)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
                     modem_state = CHECK_CPIN;
                     reset_tx_flags(3);
-                    strncpy(modem_info.cimi, payload, ARG_SIZE-1);
+                    strncpy(modem_info.cimi, payload, CHK_SIZE-1);
                 }
             }
             else
