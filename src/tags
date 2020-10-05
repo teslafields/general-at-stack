@@ -1,0 +1,254 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ARG_SIZE	at-interface.h	43;"	d
+AT	at-common.h	6;"	d
+ATCGDCONT	SIM7600X-H.h	6;"	d
+ATCGDCONT	sim7100x.h	13;"	d
+ATCGMI	at-common.h	12;"	d
+ATCGMM	at-common.h	13;"	d
+ATCGMR	at-common.h	14;"	d
+ATCGREG	sim7100x.h	12;"	d
+ATCGSN	at-common.h	15;"	d
+ATCIMI	at-common.h	16;"	d
+ATCNSMOD	sim7100x.h	9;"	d
+ATCOPS	SIM7600X-H.h	5;"	d
+ATCOPS	sim7100x.h	11;"	d
+ATCPIN	SIM7600X-H.h	1;"	d
+ATCPIN	sim7100x.h	5;"	d
+ATCPSI	sim7100x.h	8;"	d
+ATCREG	SIM7600X-H.h	3;"	d
+ATCREG	sim7100x.h	7;"	d
+ATCSQ	SIM7600X-H.h	4;"	d
+ATCSQ	sim7100x.h	10;"	d
+ATD	at-common.h	9;"	d
+ATDELIM	at-interface.h	23;"	d
+ATE	at-common.h	8;"	d
+ATERR	at-common.h	5;"	d
+ATGPS	sim7100x.h	16;"	d
+ATGPSINFO	sim7100x.h	17;"	d
+ATH	at-common.h	10;"	d
+ATI	at-common.h	7;"	d
+ATICCID	SIM7600X-H.h	2;"	d
+ATICCID	sim7100x.h	6;"	d
+ATOK	at-common.h	4;"	d
+ATPOF	sim7100x.h	15;"	d
+ATQueue	at-interface.h	/^} ATQueue;$/;"	t	typeref:struct:Queue
+ATRING	at-common.h	11;"	d
+ATRST	sim7100x.h	14;"	d
+ATURC	sim7100x.h	4;"	d
+CC	Makefile	/^CC?= $(CROSS_COMPILE)gcc$/;"	m
+CFLAGS	Makefile	/^CFLAGS?=$/;"	m
+CHECK_CGREG	at-control.c	/^    CHECK_CGREG,$/;"	e	enum:ModemStates	file:
+CHECK_COPS	at-control.c	/^    CHECK_COPS,$/;"	e	enum:ModemStates	file:
+CHECK_CPIN	at-control.c	/^    CHECK_CPIN,$/;"	e	enum:ModemStates	file:
+CHECK_CREG	at-control.c	/^    CHECK_CREG,$/;"	e	enum:ModemStates	file:
+CHECK_CSQ	at-control.c	/^    CHECK_CSQ,$/;"	e	enum:ModemStates	file:
+CHECK_GPS	at-control.c	/^    CHECK_GPS,$/;"	e	enum:ModemStates	file:
+CHK_SIZE	at-interface.h	44;"	d
+CMD_SIZE	at-interface.h	42;"	d
+COMMAND	ppp_procedure.h	11;"	d
+COMMON_H	at-common.h	2;"	d
+CONNECTION	ppp_procedure.h	10;"	d
+CellularModemFlags	at-interface.h	/^typedef struct CellularModemFlags {$/;"	s
+CellularModemInfo	at-interface.h	/^typedef struct CellularModemInfo {$/;"	s
+DMESGLOG	at-interface.h	52;"	d
+DNS1	ppp_procedure.h	23;"	d
+DNS2	ppp_procedure.h	24;"	d
+DONE	at-control.c	/^    DONE$/;"	e	enum:ModemProcedure	file:
+DRIVER	ppp_procedure.h	6;"	d
+ECHOREQUEST	ppp_procedure.h	17;"	d
+ECHO_OFF	at-control.c	/^    ECHO_OFF,$/;"	e	enum:ModemStates	file:
+EXIT	main.c	/^int EXIT = 0;$/;"	v
+FATAL	ppp_procedure.h	3;"	d
+GET_CGMI	at-control.c	/^    GET_CGMI,$/;"	e	enum:ModemStates	file:
+GET_CGMM	at-control.c	/^    GET_CGMM,$/;"	e	enum:ModemStates	file:
+GET_CGMR	at-control.c	/^    GET_CGMR,$/;"	e	enum:ModemStates	file:
+GET_CGSN	at-control.c	/^    GET_CGSN,$/;"	e	enum:ModemStates	file:
+GET_CIMI	at-control.c	/^    GET_CIMI,$/;"	e	enum:ModemStates	file:
+GET_GPSINFO	at-control.c	/^    GET_GPSINFO,$/;"	e	enum:ModemStates	file:
+GET_ICCID	at-control.c	/^    GET_ICCID,$/;"	e	enum:ModemStates	file:
+GET_NETWORK	at-control.c	/^    GET_NETWORK,$/;"	e	enum:ModemStates	file:
+GET_UEINFO	at-control.c	/^    GET_UEINFO,$/;"	e	enum:ModemStates	file:
+GPSInfo	at-interface.h	/^} GPSInfo;$/;"	t	typeref:struct:ModemGPSInfo
+GPS_PKG_LEN	at-control.c	10;"	d	file:
+HANGUP	at-control.c	/^    HANGUP,$/;"	e	enum:ModemStates	file:
+HANGUP	ppp_procedure.h	18;"	d
+IDLE	ppp_procedure.h	14;"	d
+INCALL	ppp_procedure.h	16;"	d
+INFO_AGENT	at-interface.h	54;"	d
+INIT	ppp_procedure.h	20;"	d
+LDFLAGS	Makefile	/^LDFLAGS?=$/;"	m
+LIBS	Makefile	/^LIBS?=$/;"	m
+LOCKPORT	ppp_procedure.h	8;"	d
+LOG_INFO	at-control.c	/^    LOG_INFO,$/;"	e	enum:ModemStates	file:
+LOOPBACK	ppp_procedure.h	19;"	d
+MAX_SIZE	at-interface.h	41;"	d
+MODEM_OFF	at-control.c	/^    MODEM_OFF,$/;"	e	enum:ModemStates	file:
+ModemFlags	at-interface.h	/^} ModemFlags;$/;"	t	typeref:struct:CellularModemFlags
+ModemGPSInfo	at-interface.h	/^typedef struct ModemGPSInfo {$/;"	s
+ModemInfo	at-interface.h	/^} ModemInfo;$/;"	t	typeref:struct:CellularModemInfo
+ModemProcedure	at-control.c	/^enum ModemProcedure {$/;"	g	file:
+ModemStates	at-control.c	/^enum ModemStates {$/;"	g	file:
+ModemUSBPorts	at-interface.h	/^} ModemUSBPorts;$/;"	t	typeref:struct:USBPorts
+NEGOTIATION	ppp_procedure.h	12;"	d
+NETW_LEN	sim7100x.h	19;"	d
+NS	at-interface.h	26;"	d
+OK	at-control.c	/^    OK$/;"	e	enum:ModemStates	file:
+OPENPORT	ppp_procedure.h	9;"	d
+OPTION	ppp_procedure.h	4;"	d
+OUTDIR	Makefile	/^OUTDIR=	..\/out$/;"	m
+PERMISSION	ppp_procedure.h	5;"	d
+POLL_TOUT	at-interface.h	27;"	d
+POSAUTH	ppp_procedure.h	21;"	d
+POWER_OFF	at-control.c	/^    POWER_OFF,$/;"	e	enum:ModemStates	file:
+PPPStatus	at-interface.h	/^typedef struct PPPStatus {$/;"	s
+PPPStatus	at-interface.h	/^} PPPStatus;$/;"	t	typeref:struct:PPPStatus
+PPP_HYST	at-interface.h	38;"	d
+PPP_RESOLV	ppp_procedure.h	26;"	d
+PREAUTH	ppp_procedure.h	13;"	d
+PROGRAM	Makefile	/^PROGRAM=modemapp$/;"	m
+PROGRAMPATH	Makefile	/^PROGRAMPATH= $(addprefix $(OUTDIR)\/, $(PROGRAM))$/;"	m
+Queue	at-interface.h	/^typedef struct Queue$/;"	s
+REQUEST	at-control.c	/^int REQUEST = 0;$/;"	v
+RESOLV_CONF	at-interface.h	53;"	d
+RETRIES	at-control.c	/^int RETRIES = 3;$/;"	v
+RSSI_MIN	at-interface.h	34;"	d
+RSSI_UKW	at-interface.h	35;"	d
+RUN	main.c	/^int RUN = 1;$/;"	v
+SETUP	at-control.c	/^    SETUP,$/;"	e	enum:ModemProcedure	file:
+SET_CGDCONT	at-control.c	/^    SET_CGDCONT,$/;"	e	enum:ModemStates	file:
+SET_GPS	at-control.c	/^    SET_GPS,$/;"	e	enum:ModemStates	file:
+SIGNAL	ppp_procedure.h	7;"	d
+SIM100X_H	sim7100x.h	2;"	d
+SRCS	Makefile	/^SRCS= main.c system.c at-control.c at-queue.c at-recv.c ppp_procedure.c sim7100x.c unix_client.c$/;"	m
+START_PPP	at-control.c	/^    START_PPP,$/;"	e	enum:ModemStates	file:
+SUCCESS	ppp_procedure.h	2;"	d
+TCSQ	at-interface.h	30;"	d
+TGPS	at-interface.h	29;"	d
+TIMEOUT	ppp_procedure.h	15;"	d
+TINFO	at-interface.h	31;"	d
+TSLEEP	at-interface.h	28;"	d
+UCLISOCK	unix_client.c	/^int sock_fd = 0, UCLISOCK = 0;$/;"	v
+UCLISOCKPATH	at-interface.h	51;"	d
+UCLI_H_LEN	at-control.c	9;"	d	file:
+UCLI_PKG_LEN	at-control.c	11;"	d	file:
+USBPorts	at-interface.h	/^typedef struct USBPorts {$/;"	s
+VMIN_USB	at-interface.h	47;"	d
+VTIME_USB	at-interface.h	48;"	d
+WAIT	at-control.c	/^    WAIT,$/;"	e	enum:ModemProcedure	file:
+alt	at-interface.h	/^    float alt;$/;"	m	struct:ModemGPSInfo
+at	at-interface.h	/^    int at;$/;"	m	struct:USBPorts
+at_control	at-control.c	/^void *at_control()$/;"	f
+audio	at-interface.h	/^    int audio;$/;"	m	struct:USBPorts
+ber	at-interface.h	/^    unsigned ber;$/;"	m	struct:CellularModemInfo
+capacity	at-interface.h	/^    int front, rear, size, capacity;$/;"	m	struct:Queue
+cgmi	at-interface.h	/^    char cgmi[CHK_SIZE];$/;"	m	struct:CellularModemInfo
+cgmm	at-interface.h	/^    char cgmm[CHK_SIZE];$/;"	m	struct:CellularModemInfo
+cgmr	at-interface.h	/^    char cgmr[CHK_SIZE];$/;"	m	struct:CellularModemInfo
+cgreg	at-interface.h	/^    int cgreg;$/;"	m	struct:CellularModemInfo
+cgsn	at-interface.h	/^    char cgsn[CHK_SIZE];$/;"	m	struct:CellularModemInfo
+check_ppp_interface	ppp_procedure.c	/^int check_ppp_interface()$/;"	f
+check_ppp_process	ppp_procedure.c	/^int check_ppp_process()$/;"	f
+cimi	at-interface.h	/^    char cimi[CHK_SIZE];$/;"	m	struct:CellularModemInfo
+clearQueue	at-queue.c	/^void clearQueue(ATQueue* queue)$/;"	f
+cmd	at-interface.h	/^    char** cmd;$/;"	m	struct:Queue
+convert_gps_coordinates	at-control.c	/^void convert_gps_coordinates(int type, GPSInfo *inf) {$/;"	f
+cops	at-interface.h	/^    char cops[CHK_SIZE];$/;"	m	struct:CellularModemInfo
+course	at-interface.h	/^    int course;$/;"	m	struct:ModemGPSInfo
+cpin	at-interface.h	/^    int cpin;$/;"	m	struct:CellularModemInfo
+createQueue	at-queue.c	/^ATQueue* createQueue(unsigned capacity)$/;"	f
+creg	at-interface.h	/^    int creg;$/;"	m	struct:CellularModemInfo
+date	at-interface.h	/^    unsigned date;$/;"	m	struct:ModemGPSInfo
+decode_at_data	at-control.c	/^void decode_at_data()$/;"	f
+dequeue	at-queue.c	/^char* dequeue(ATQueue* queue)$/;"	f
+destroyQueue	at-queue.c	/^void destroyQueue(ATQueue* queue)$/;"	f
+diag	at-interface.h	/^    int diag;$/;"	m	struct:USBPorts
+displayQueue	at-queue.c	/^void displayQueue(ATQueue* queue)$/;"	f
+dns_updated	at-interface.h	/^    int dns_updated;$/;"	m	struct:PPPStatus
+do_wait	at-control.c	/^void do_wait(pthread_mutex_t *the_lock, pthread_cond_t *the_cond, unsigned int tsleep)$/;"	f
+enqueue	at-queue.c	/^void enqueue(ATQueue* queue, char* item)$/;"	f
+enqueue_at_data	at-recv.c	/^void enqueue_at_data(ATQueue *queue, char* buffer, char* delimiter)$/;"	f
+exit_control	at-control.c	/^void exit_control() {$/;"	f
+exit_error	main.c	/^void exit_error(const char *format, ...)$/;"	f
+front	at-interface.h	/^    int front, rear, size, capacity;$/;"	m	struct:Queue
+front	at-queue.c	/^char* front(ATQueue* queue)$/;"	f
+get_ppp_pid	ppp_procedure.c	/^pid_t get_ppp_pid() {$/;"	f
+get_str_timestamp	system.c	/^char* get_str_timestamp(time_t timeref)$/;"	f
+get_tty_port	system.c	/^int get_tty_port(ModemUSBPorts *ports, int iteration){$/;"	f
+get_tty_port_script	system.c	/^int get_tty_port_script(ModemUSBPorts *ports) {$/;"	f
+gps	at-interface.h	/^    int gps;$/;"	m	struct:USBPorts
+gps_info	at-control.c	/^GPSInfo gps_info;$/;"	v
+iccid	at-interface.h	/^    char iccid[CHK_SIZE];$/;"	m	struct:CellularModemInfo
+info_queue	at-recv.c	/^ATQueue* info_queue;$/;"	v
+init_global	at-control.c	/^void init_global() {$/;"	f
+init_port	system.c	/^int init_port(struct pollfd *fds, char *device, struct termios *s_port, int vmin, int vtime)$/;"	f
+isEmpty	at-queue.c	/^int isEmpty(ATQueue* queue)$/;"	f
+isFull	at-queue.c	/^int isFull(ATQueue* queue)$/;"	f
+kill_ppp	ppp_procedure.c	/^void kill_ppp()$/;"	f
+last_sent_cmd	at-interface.h	/^char last_sent_cmd[CMD_SIZE];$/;"	v
+latdd	at-interface.h	/^    unsigned latdd;$/;"	m	struct:ModemGPSInfo
+latdir	at-interface.h	/^    char latdir;$/;"	m	struct:ModemGPSInfo
+latmm	at-interface.h	/^    unsigned latmm;$/;"	m	struct:ModemGPSInfo
+latraw	at-interface.h	/^    double latraw;$/;"	m	struct:ModemGPSInfo
+latss	at-interface.h	/^    float latss;$/;"	m	struct:ModemGPSInfo
+lngdd	at-interface.h	/^    unsigned lngdd;$/;"	m	struct:ModemGPSInfo
+lngdir	at-interface.h	/^    char lngdir;$/;"	m	struct:ModemGPSInfo
+lngmm	at-interface.h	/^    unsigned lngmm;$/;"	m	struct:ModemGPSInfo
+lngraw	at-interface.h	/^    double lngraw;$/;"	m	struct:ModemGPSInfo
+lngss	at-interface.h	/^    float lngss;$/;"	m	struct:ModemGPSInfo
+log_modem_info	at-control.c	/^void log_modem_info() {$/;"	f
+main	main.c	/^int main(int argc, char *argv[])$/;"	f
+modem_flags	at-control.c	/^ModemFlags modem_flags;$/;"	v
+modem_info	at-control.c	/^ModemInfo modem_info;$/;"	v
+modem_ports	main.c	/^ModemUSBPorts modem_ports = {0};$/;"	v
+modem_procedure	at-control.c	/^enum ModemProcedure modem_procedure = SETUP;$/;"	v	typeref:enum:ModemProcedure
+modem_state	at-control.c	/^enum ModemStates modem_state = MODEM_OFF;$/;"	v	typeref:enum:ModemStates
+modemfd	at-interface.h	/^struct pollfd modemfd;$/;"	v	typeref:struct:pollfd
+netw	at-interface.h	/^    char netw[12];$/;"	m	struct:CellularModemInfo
+networks	sim7100x.c	/^const char* networks[NETW_LEN] = {$/;"	v
+pof	at-interface.h	/^    unsigned char pof;$/;"	m	struct:CellularModemFlags
+ppp	at-interface.h	/^    int ppp;$/;"	m	struct:USBPorts
+ppp_cond	at-interface.h	/^pthread_cond_t state_machine_cond, ppp_cond;$/;"	v
+ppp_lock	at-interface.h	/^pthread_mutex_t state_machine_lock, ppp_lock;$/;"	v
+ppp_procedure	ppp_procedure.c	/^void *ppp_procedure()$/;"	f
+ppp_status	ppp_procedure.c	/^PPPStatus ppp_status;$/;"	v
+rc	at-interface.h	/^    int rc;$/;"	m	struct:PPPStatus
+read_at_data	at-recv.c	/^void *read_at_data()$/;"	f
+rear	at-interface.h	/^    int front, rear, size, capacity;$/;"	m	struct:Queue
+rear	at-queue.c	/^char* rear(ATQueue* queue)$/;"	f
+report_csq_to_agent	system.c	/^void report_csq_to_agent(unsigned int rssi, unsigned int ber, char *network) {$/;"	f
+reset_ppp_status	ppp_procedure.c	/^void reset_ppp_status() {$/;"	f
+reset_tx_flags	at-control.c	/^void reset_tx_flags(int mask) {$/;"	f
+ring	at-interface.h	/^    unsigned char ring;$/;"	m	struct:CellularModemFlags
+rssi	at-interface.h	/^    unsigned rssi;$/;"	m	struct:CellularModemInfo
+rst	at-interface.h	/^    unsigned char rst;$/;"	m	struct:CellularModemFlags
+run	at-interface.h	/^    int run;$/;"	m	struct:PPPStatus
+rx_modem	at-interface.h	/^char rx_modem[MAX_SIZE];$/;"	v
+rx_queue	at-recv.c	/^ATQueue* rx_queue;$/;"	v
+s_portsettings	at-interface.h	/^struct termios s_portsettings[2];$/;"	v	typeref:struct:termios
+size	at-interface.h	/^    int front, rear, size, capacity;$/;"	m	struct:Queue
+sms	at-interface.h	/^    unsigned char sms;$/;"	m	struct:CellularModemFlags
+sock_fd	unix_client.c	/^int sock_fd = 0, UCLISOCK = 0;$/;"	v
+speed	at-interface.h	/^    float speed;$/;"	m	struct:ModemGPSInfo
+state_machine_cond	at-interface.h	/^pthread_cond_t state_machine_cond, ppp_cond;$/;"	v
+state_machine_lock	at-interface.h	/^pthread_mutex_t state_machine_lock, ppp_lock;$/;"	v
+strtoke	at-recv.c	/^char* strtoke(char *str, const char *delim)$/;"	f
+sync_all_timers	at-control.c	/^void sync_all_timers() {$/;"	f
+sync_timers	at-control.c	/^void sync_timers(struct timespec *ts_timer, struct timespec *ts_aux) {$/;"	f
+time	at-interface.h	/^    unsigned time;$/;"	m	struct:ModemGPSInfo
+ts_cond_tout	at-control.c	/^struct timespec ts_cond_tout, ts_global_timer, ts_csq, ts_gps, ts_info;$/;"	v	typeref:struct:timespec
+ts_csq	at-control.c	/^struct timespec ts_cond_tout, ts_global_timer, ts_csq, ts_gps, ts_info;$/;"	v	typeref:struct:
+ts_global_timer	at-control.c	/^struct timespec ts_cond_tout, ts_global_timer, ts_csq, ts_gps, ts_info;$/;"	v	typeref:struct:
+ts_gps	at-control.c	/^struct timespec ts_cond_tout, ts_global_timer, ts_csq, ts_gps, ts_info;$/;"	v	typeref:struct:
+ts_info	at-control.c	/^struct timespec ts_cond_tout, ts_global_timer, ts_csq, ts_gps, ts_info;$/;"	v	typeref:struct:
+tx_modem	at-interface.h	/^char tx_modem[CMD_SIZE];$/;"	v
+ucli_close_socket	unix_client.c	/^void ucli_close_socket() {$/;"	f
+ucli_connect_and_send	unix_client.c	/^int ucli_connect_and_send(void *data, unsigned size) {$/;"	f
+ucli_create_socket	unix_client.c	/^int ucli_create_socket() {$/;"	f
+ucli_send_data	unix_client.c	/^int ucli_send_data(void *data, unsigned size) {$/;"	f
+update_dns_servers	ppp_procedure.c	/^int update_dns_servers() {$/;"	f
+write_at_data	at-control.c	/^int write_at_data()$/;"	f

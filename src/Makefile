@@ -7,7 +7,7 @@ CC?= $(CROSS_COMPILE)gcc
 CFLAGS?=
 LDFLAGS?=
 LIBS?=
-define?=-D SIM7100 -D REPORT_AGENT -D UNIX_CLI
+define?=-D SIM7100 -D REPORT_AGENT -D UNIX_CLI -D PPP
 WARN?=
 ifeq ($(WARN),full)
 WARNINGS= -W -Wall -ansi -Wextra -pedantic -Wstrict-overflow=5 -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wunused-variable

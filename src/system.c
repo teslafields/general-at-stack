@@ -12,7 +12,7 @@ int get_tty_port_script(ModemUSBPorts *ports) {
     if (!ret)
         return -1;
     ret = sscanf(result, "%d %d", &start, &num);
-    if (ret < 2)
+    if (ret < 2 || !num)
         return -1;
     ports->diag = start;
     ports->gps = ports->diag + 1;

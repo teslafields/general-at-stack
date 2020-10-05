@@ -20,8 +20,17 @@ int main(int argc, char *argv[])
     /* This is used for systemd log */
     setbuf(stdout, NULL);
 
+    int retries = 3;
+
     printf("MODEM-APP start up\n");
-    if (get_tty_port_script(&modem_ports) != 0)
+    while (get_tty_port_script(&modem_ports) != 0 && retries--) {
+        printf("Port not found.. %d\n", retries);
+        sleep(3);
+    }
+    
+    ucli_send_port_info((char) retries, &modem_ports);
+
+    if (!retries)
         exit_error("USB ports error\n");
 
     pthread_t tid[2];
@@ -31,7 +40,7 @@ int main(int argc, char *argv[])
     char port[20] = {0};
     sprintf(port, "/dev/ttyUSB%d", modem_ports.at);
     if (init_port(&modemfd, port, &s_portsettings[0], VMIN_USB, VTIME_USB) != 0)
-        exit_error("Unable to open and setup TTY port!");
+        exit_error("Unable to open and setup TTY port!\n");
     if (pthread_create(&tid[0], NULL, read_at_data, NULL))
         exit_error("pthread_create read_at_data\n");
 #ifdef PPP

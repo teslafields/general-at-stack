@@ -6,10 +6,6 @@
 #include "sim7100x.h"
 #endif
 
-#define UCLI_H_LEN 2
-#define GPS_PKG_LEN (sizeof(unsigned)*4+sizeof(char)*2+sizeof(float)*4)
-#define UCLI_PKG_LEN (sizeof(ModemInfo)+GPS_PKG_LEN+UCLI_H_LEN)
-
 enum ModemStates {
     MODEM_OFF,
     ECHO_OFF,
@@ -99,7 +95,7 @@ void convert_gps_coordinates(int type, GPSInfo *inf) {
             inf->latmm = ((int) inf->latraw)%100;
             inf->lngmm = ((int) inf->lngraw)%100;
             inf->latss = (float) 60*(inf->latraw - floor(inf->latraw));
-            inf->lngss = (float) 60*(inf->latraw - floor(inf->latraw));
+            inf->lngss = (float) 60*(inf->lngraw - floor(inf->lngraw));
             break;
     }
 }
@@ -143,7 +139,6 @@ void *at_control()
     unsigned long diff;
     short ppp_hyst = 0;
     int n;
-    char ucli_tx[UCLI_PKG_LEN] = {0};
     init_global();
     sync_all_timers();
     while (RUN) {
@@ -176,26 +171,7 @@ void *at_control()
             else {
 #ifdef UNIX_CLI
                 if (ts_global_timer.tv_sec - ts_info.tv_sec >= TINFO) {
-                    ucli_tx[0] = '!'; // start byte
-                    ucli_tx[1] = 10; // command code 10: "modem info"
-                    n = sizeof(modem_info);
-                    memcpy(ucli_tx+UCLI_H_LEN, &modem_info, n);
-                    n += UCLI_H_LEN;
-                    if (gps_info.date > 0) {
-                        memcpy(ucli_tx+n, &gps_info, GPS_PKG_LEN); 
-                        n += GPS_PKG_LEN;
-                    }
-                    if ((n = ucli_connect_and_send(ucli_tx, n)) <= 0) {
-                        if (n == -2) 
-                            printf("Connect(%s) failed\n", UCLISOCKPATH);
-                        else if (n == -1)
-                            printf("Write(%s) error\n", UCLISOCKPATH);
-                        else
-                            printf("Partial write, total bytes: %d\n", n);
-
-                    }
-                    else
-                        printf("ucli: successfully sent %d bytes\n", n);
+                    ucli_send_modem_info(&modem_info, &gps_info); 
                     sync_timers(&ts_global_timer, &ts_info);
                 }
                 else if (ts_global_timer.tv_sec - ts_gps.tv_sec >= TGPS) {
@@ -320,8 +296,8 @@ void decode_at_data()
         if (strcmp(pch, ATOK) && strcmp(pch, ATERR)) {
             if (!strcmp(pch, AT) || !strcmp(pch, ATE))
                 decode_at_data();
-            else if (!strcmp(pch, ATRING))
-                modem_flags.ring = 1;
+            else if (!strcmp(pch, ATRING)){}
+                // modem_flags.ring = 1;
             else if (strstr(pch, ATCPIN)) {
                 if (strstr(pch, "READY") && !strcmp(dequeue(rx_queue), ATOK)) {
                     modem_info.cpin = 1; 
@@ -375,7 +351,8 @@ void decode_at_data()
                             case 0:
                             case 3:
                             case 4:
-                                modem_state = MODEM_OFF;
+                                reset_tx_flags(1);
+                                modem_flags.pof = 1;
                                 break;
                             case 2:
                                 reset_tx_flags(1);
@@ -425,7 +402,7 @@ void decode_at_data()
             }
             else if (strstr(pch, ATCOPS)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
-                    sprintf(fmt, "%s: %%*d,%%*d,%%%d[^,]", ATCOPS, CHK_SIZE);
+                    sprintf(fmt, "%s: %%*d,%%*d,\"%%%d[^,\"]", ATCOPS, CHK_SIZE);
                     n = sscanf(payload, fmt, modem_info.cops); 
                     if (strstr(last_sent_cmd, ATCOPS)) {
                         modem_state = SET_CGDCONT;
@@ -449,7 +426,7 @@ void decode_at_data()
                 modem_state = OK;
                 reset_tx_flags(3);
             }
-            else if (strstr(pch, ATGPS)) {
+            else if (strstr(pch, ATGPS) && strstr(last_sent_cmd, ATGPS)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
                     sprintf(fmt, "%s: %%d", ATGPS);
                     n = sscanf(payload, fmt, &dummy);
@@ -506,6 +483,10 @@ void decode_at_data()
                 decode_at_data();
         }
         /* Commands that return OK or ERROR should be handled here */
+        else if (!strcmp(last_sent_cmd, ATH) && !strcmp(pch, ATOK)) {
+            modem_state = OK;
+            reset_tx_flags(3);
+        }
         else if (!strcmp(last_sent_cmd, AT) && !strcmp(pch, ATOK)) {
             modem_state = ECHO_OFF;
             reset_tx_flags(3);

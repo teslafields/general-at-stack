@@ -26,9 +26,9 @@
 #define NS 1000000000
 #define POLL_TOUT 3000
 #define TSLEEP 5
-#define TGPS 15
-#define TCSQ 10
-#define TINFO 20
+#define TGPS 30
+#define TCSQ 15
+#define TINFO 40
 
 /* RSSI boundaries */
 #define RSSI_MIN 6
@@ -42,6 +42,7 @@
 #define CMD_SIZE (MAX_SIZE>>2)
 #define ARG_SIZE (CMD_SIZE>>2)
 #define CHK_SIZE ((ARG_SIZE>>1)-8)
+#define PKG_GPS_LEN (sizeof(unsigned)*4+sizeof(char)*2+sizeof(float)*4)
 
 /* Termios configuration */
 #define VMIN_USB 255
@@ -81,14 +82,14 @@ typedef struct CellularModemFlags {
 typedef struct ModemGPSInfo {
     unsigned latdd;
     unsigned latmm;
-    float latss;
-    char latdir;
     unsigned lngdd;
     unsigned lngmm;
+    float latss;
     float lngss;
-    char lngdir;
     float alt;
     float speed;
+    char latdir;
+    char lngdir;
     unsigned date;
     unsigned time;
     int course;
@@ -163,7 +164,8 @@ void report_csq_to_agent(unsigned int rssi, unsigned int ber, char *network);
 int ucli_create_socket();
 int ucli_send_data(void *data, unsigned size);
 void ucli_close_socket();
-int ucli_connect_and_send(void *data, unsigned size);
+int ucli_send_modem_info(ModemInfo *minfo, GPSInfo *ginfo);
+int ucli_send_port_info(char result, ModemUSBPorts *ports);
 
 extern ATQueue* rx_queue;
 extern ATQueue* info_queue;
