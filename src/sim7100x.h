@@ -15,6 +15,10 @@
 #define ATPOF       "+CPOF"
 #define ATGPS       "+CGPS"
 #define ATGPSINFO   "+CGPSINFO"
+#define ATSIM       "+SIMCARD"
+#define ATCMEE      "+CMEE"
+#define ATCME       "+CME ERROR"
+#define ATCMS       "+CMS ERROR"
 
 #define NETW_LEN 16
 

@@ -18,6 +18,7 @@ enum ModemStates {
     CHECK_CPIN,
     CHECK_CREG,
 #ifdef SIM7100
+    SET_CMEE,
     GET_UEINFO,
     GET_NETWORK,
     CHECK_GPS,
@@ -34,15 +35,10 @@ enum ModemStates {
     POWER_OFF,
     OK
 };
-enum ModemProcedure {
-    SETUP,
-    WAIT,
-    DONE
-};
 
 /* Modem states */
 enum ModemStates modem_state = MODEM_OFF;
-enum ModemProcedure modem_procedure = SETUP;
+
 
 /* Global flags */
 int REQUEST = 0;
@@ -57,6 +53,7 @@ void decode_at_data();
 
 
 void init_global() {
+    modem_procedure = SETUP;
     memset(&modem_info, 0, sizeof(modem_info));
     memset(&modem_flags, 0, sizeof(modem_flags));
     memset(&gps_info, 0, sizeof(gps_info));
@@ -112,6 +109,18 @@ void sync_all_timers() {
     sync_timers(&ts_global_timer, &ts_info);
 }
 
+void reset_states(int pof, char *msg) {
+    if (msg)
+        printf("Message: %s", msg);
+    printf("\n");
+    modem_procedure = SETUP;
+    modem_state = MODEM_OFF;
+    modem_info.cpin = 0;
+    reset_tx_flags(3);
+    if (pof)
+        modem_flags.pof = 1;
+}
+
 int write_at_data()
 {
     int n;
@@ -120,7 +129,8 @@ int write_at_data()
         return 0;
     }
     REQUEST = 1;
-    printf("--> [%3d] %s\n", n+2, tx_modem);
+    if (modem_procedure != DONE)
+        printf("--> [%3d] %s\n", n+2, tx_modem);
     tx_modem[n] = 0xD;
     tx_modem[n+1] = 0xA;
     n = n + 2;
@@ -138,15 +148,18 @@ void *at_control()
 {
     unsigned long diff;
     short ppp_hyst = 0;
-    int n;
+    int n, ucli_modem_send_flag = 1, ucli_ports_send_flag = 1;
     init_global();
     sync_all_timers();
     while (RUN) {
         clock_gettime(CLOCK_MONOTONIC, &ts_global_timer);
         if (ppp_status.run) {
             if (ppp_hyst >= PPP_HYST) {
-                if (check_ppp_process())
+                if ( (n = check_ppp_process()) ) { // if ppp has exited
                     ppp_hyst = 0;
+                    if (n == 8 && !modem_flags.pof) // connect script failed
+                        modem_flags.pof = 1;
+                }
             }
             else
                 ppp_hyst++;
@@ -170,8 +183,15 @@ void *at_control()
 #endif
             else {
 #ifdef UNIX_CLI
-                if (ts_global_timer.tv_sec - ts_info.tv_sec >= TINFO) {
-                    ucli_send_modem_info(&modem_info, &gps_info); 
+                if (ucli_ports_send_flag)
+                    ucli_ports_send_flag = ucli_send_port_info(1, &modem_ports) > 0 ? 0 : 1;
+                if (ts_global_timer.tv_sec - ts_info.tv_sec >= TINFO || ucli_modem_send_flag) {
+                    if (ucli_send_modem_info(&modem_info, &gps_info) > 0)
+                        ucli_modem_send_flag = 0;
+                    else {
+                        ucli_modem_send_flag = 1;
+                        ucli_ports_send_flag = 1;
+                    }
                     sync_timers(&ts_global_timer, &ts_info);
                 }
                 else if (ts_global_timer.tv_sec - ts_gps.tv_sec >= TGPS) {
@@ -207,6 +227,9 @@ void *at_control()
                 sprintf(tx_modem, "AT%s", ATCGSN);
                 break;
 #ifdef SIM7100
+            case SET_CMEE:
+                sprintf(tx_modem, "AT%s=1", ATCMEE);
+                break;
             case CHECK_GPS:
                 sprintf(tx_modem, "AT%s?", ATGPS);
                 break;
@@ -288,8 +311,8 @@ void *at_control()
 
 void decode_at_data()
 {
-    int n, dummy;
-    char *pch = NULL, payload[CMD_SIZE] = {0}, fmt[ARG_SIZE] = {0};
+    int n, dummy, err;
+    char *pch=NULL, *ok=NULL, payload[CMD_SIZE]={0}, fmt[ARG_SIZE]={0};
     pch = dequeue(rx_queue);
     if (pch) {
         strcpy(payload, pch);
@@ -298,18 +321,45 @@ void decode_at_data()
                 decode_at_data();
             else if (!strcmp(pch, ATRING)){}
                 // modem_flags.ring = 1;
+            else if (strstr(pch, ATCME) || strstr(pch, ATCMS)) {
+                pch += strlen(ATCME) + 2;
+                err = strtol(pch, NULL, 10);
+                printf("Error code: %d\n", err);
+                switch (err) {
+                    case 3:
+                    case 13:
+                        reset_states(1, pch);
+                        break;
+                    default:
+                        reset_states(0, pch);
+                }
+            }
+            else if (strstr(pch, ATSIM)) {
+                pch += strlen(ATSIM) + 2;
+                if (!strcmp(pch, "NOT AVAILABLE"))
+                    reset_states(0, pch);
+            }
             else if (strstr(pch, ATCPIN)) {
-                if (strstr(pch, "READY") && !strcmp(dequeue(rx_queue), ATOK)) {
-                    modem_info.cpin = 1; 
+                pch += strlen(ATCPIN) + 2;
+                /*
+                 * READY not pending for any password
+                 * SIM PIN waiting SIM PIN to be given
+                 * SIM PUK waiting SIM PUK to be given
+                 * PH-SIM PIN waiting phone-to-SIM card password to be given
+                 * SIM PIN2 waiting SIM PIN2 to be given
+                 * SIM PUK2 waiting SIM PUK2 to be given
+                 * PH-NET PIN waiting network personalization password A to be given
+                 */
+                if (!strcmp(pch, "READY")) {
+                    modem_info.cpin = 1;
                     if (strstr(last_sent_cmd, ATCPIN)) {
+                        dequeue(rx_queue);
                         modem_state = GET_ICCID;
                         reset_tx_flags(3);
                     }
                 }
-                else {
-                    modem_state = MODEM_OFF;
-                    modem_info.cpin = 0;
-                }
+                else
+                    reset_states(0, pch);
             }
             else if (strstr(pch, ATCGMR)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
@@ -366,48 +416,48 @@ void decode_at_data()
                     modem_state = MODEM_OFF;
             }
             else if (strstr(pch, ATCNSMOD)) {
-                if (!strcmp(dequeue(rx_queue), ATOK)) {
+                if (strstr(last_sent_cmd, ATCNSMOD) && !strcmp(dequeue(rx_queue), ATOK)) {
                     sprintf(fmt, "%s: %%*d,%%d", ATCNSMOD);
                     sscanf(payload, fmt, &dummy);
                     if (dummy >= 0 && dummy < sizeof(networks)/sizeof(char *)) {
                         strcpy(modem_info.netw, networks[dummy]);
                     }
-                    if (strstr(last_sent_cmd, ATCNSMOD)) {
-                        modem_state = CHECK_CSQ;
-                        reset_tx_flags(3);
-                    }
+                    modem_state = CHECK_CSQ;
+                    reset_tx_flags(3);
                 }
             }
             else if (strstr(pch, ATCSQ)) {
-                if (!strcmp(dequeue(rx_queue), ATOK)) {
+                if (strstr(last_sent_cmd, ATCSQ) && !strcmp(dequeue(rx_queue), ATOK)) {
                     sprintf(fmt, "%s: %%u,%%u", ATCSQ);
-                    n = sscanf(payload, fmt, &modem_info.rssi, &modem_info.ber);
+                    n = sscanf(payload, fmt, &dummy, &modem_info.ber);
                     if (n == -1) {
                         modem_info.rssi = RSSI_UKW;
                         modem_info.ber = RSSI_UKW;
                     }
-                    if (strstr(last_sent_cmd, ATCSQ)) {
-                        if (modem_procedure == SETUP)
-                            modem_state = CHECK_COPS;
-                        else {
-#ifdef REPORT_AGENT
-                            report_csq_to_agent(modem_info.rssi, modem_info.ber,
+                    else {
+                        if (dummy != modem_info.rssi)
+                            printf("CSQ Report: %d,%d,%s\n", dummy, modem_info.ber,
                                     modem_info.netw);
-#endif
-                            modem_state = OK;
-                        }
-                        reset_tx_flags(3);
+                        modem_info.rssi = dummy;
                     }
+                    if (modem_procedure == SETUP)
+                        modem_state = CHECK_COPS;
+                    else {
+#ifdef REPORT_AGENT
+                        report_csq_to_agent(modem_info.rssi, modem_info.ber,
+                                modem_info.netw);
+#endif
+                        modem_state = OK;
+                    }
+                    reset_tx_flags(3);
                 }
             }
             else if (strstr(pch, ATCOPS)) {
-                if (!strcmp(dequeue(rx_queue), ATOK)) {
+                if (strstr(last_sent_cmd, ATCOPS) && !strcmp(dequeue(rx_queue), ATOK)) {
                     sprintf(fmt, "%s: %%*d,%%*d,\"%%%d[^,\"]", ATCOPS, CHK_SIZE);
                     n = sscanf(payload, fmt, modem_info.cops); 
-                    if (strstr(last_sent_cmd, ATCOPS)) {
-                        modem_state = SET_CGDCONT;
-                        reset_tx_flags(3);
-                    }
+                    modem_state = SET_CGDCONT;
+                    reset_tx_flags(3);
                 }
             }
 #ifdef SIM7100
@@ -464,7 +514,7 @@ void decode_at_data()
             else if (strstr(last_sent_cmd, ATCGSN)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
 #ifdef SIM7100
-                    modem_state = CHECK_GPS;
+                    modem_state = SET_CMEE;
 #else
                     modem_state = GET_CIMI;
 #endif
@@ -496,6 +546,13 @@ void decode_at_data()
             reset_tx_flags(3);
         }
 #ifdef SIM7100
+        else if (strstr(last_sent_cmd, ATCMEE)) {
+            if (strcmp(pch, ATOK)) {
+                printf("Error setting CMEE\n");
+            }
+            modem_state = CHECK_GPS;
+            reset_tx_flags(3);
+        }
         else if (strstr(last_sent_cmd, ATGPS)) {
             if (strcmp(pch, ATOK)) {
                 printf("Error setting GPS\n");

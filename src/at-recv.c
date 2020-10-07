@@ -49,15 +49,17 @@ void *read_at_data()
             n = read(modemfd.fd, rx_modem, MAX_SIZE);
             if(n > 0)
             {
-                printf("<-- [%3d] \"", n);
-                for (ret=0; ret<n; ret++)
-                {
-                    if (rx_modem[ret] >= 0x20)
-                        printf("%c", rx_modem[ret]);
-                    else
-                        printf("\\x%x", rx_modem[ret]);
+                if (modem_procedure != DONE || !REQUEST) {
+                    printf("<-- [%3d] \"", n);
+                    for (ret=0; ret<n; ret++)
+                    {
+                        if (rx_modem[ret] >= 0x20)
+                            printf("%c", rx_modem[ret]);
+                        else
+                            printf("\\x%x", rx_modem[ret]);
+                    }
+                    printf("\"\n");
                 }
-                printf("\"\n");
                 enqueue_at_data(rx_queue, rx_modem, ATDELIM);
                 memset(rx_modem, 0, MAX_SIZE);
                 pthread_cond_signal(&state_machine_cond);

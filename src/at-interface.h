@@ -1,3 +1,5 @@
+#ifndef AT_INTERFACE_H
+#define AT_INTERFACE_H
 #include <termios.h>
 #include <poll.h>
 #include <pthread.h>
@@ -26,9 +28,9 @@
 #define NS 1000000000
 #define POLL_TOUT 3000
 #define TSLEEP 5
-#define TGPS 30
-#define TCSQ 15
-#define TINFO 40
+#define TGPS 40
+#define TCSQ 25
+#define TINFO 60
 
 /* RSSI boundaries */
 #define RSSI_MIN 6
@@ -53,6 +55,13 @@
 #define DMESGLOG "/var/log/kern"
 #define RESOLV_CONF "/etc/resolv.conf"
 #define INFO_AGENT "/var/lib/losant-edge-agent/data/modem_info.json"
+
+/* Modem procdeures */
+enum ModemProcedure {
+    SETUP,
+    WAIT,
+    DONE
+};
 
 /* General modem structs */
 typedef struct CellularModemInfo {
@@ -167,12 +176,15 @@ void ucli_close_socket();
 int ucli_send_modem_info(ModemInfo *minfo, GPSInfo *ginfo);
 int ucli_send_port_info(char result, ModemUSBPorts *ports);
 
+enum ModemProcedure modem_procedure;
 extern ATQueue* rx_queue;
 extern ATQueue* info_queue;
 extern ModemInfo modem_info;
 extern ModemUSBPorts modem_ports;
 extern GPSInfo gps_info;
 extern PPPStatus ppp_status;
+extern int REQUEST;
 extern int RUN;
 extern int EXIT;
 extern int UCLISOCK;
+#endif

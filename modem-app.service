@@ -5,21 +5,18 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/modemapp
-
+ExecStart=/usr/local/bin/modemapp
 #ExecReload=/bin/kill -s HUP $MAINPID
 
 TimeoutSec=0
-RestartSec=5
+RestartSec=10
 Restart=always
 
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=modem-app
 
-#StartLimitBurst=3
-#StartLimitInterval=10s
-KillMode=process
+KillMode=control-group
 
 [Install]
 WantedBy=multi-user.target

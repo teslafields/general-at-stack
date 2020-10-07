@@ -20,14 +20,15 @@ int main(int argc, char *argv[])
     /* This is used for systemd log */
     setbuf(stdout, NULL);
 
-    int retries = 3;
+    int retries = 5;
 
     printf("MODEM-APP start up\n");
-    while (get_tty_port_script(&modem_ports) != 0 && retries--) {
+    while (get_tty_port_script(&modem_ports) != 0 && retries) {
         printf("Port not found.. %d\n", retries);
         sleep(3);
+        retries--;
     }
-    
+
     ucli_send_port_info((char) retries, &modem_ports);
 
     if (!retries)
@@ -56,7 +57,5 @@ int main(int argc, char *argv[])
 #ifdef PPP
     pthread_join(tid[1], NULL);
 #endif
-    if (EXIT)
-        sleep(5);
     return 0;
 }

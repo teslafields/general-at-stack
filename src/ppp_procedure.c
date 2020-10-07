@@ -153,7 +153,7 @@ int check_ppp_process()
     else {
         if (check_ppp_interface()) {
             if (!ppp_status.dns_updated) {
-                printf("update dns[%d]\n", update_dns_servers());
+                printf("ppp: update dns[%d]\n", update_dns_servers());
                 ppp_status.dns_updated = 1;
             }
         }
@@ -172,7 +172,7 @@ void *ppp_procedure()
         if (EXIT)
             break;
         kill_ppp();
-        sprintf(cmd, "/usr/sbin/pppd ttyUSB%d call sim7100", modem_ports.ppp);
+        sprintf(cmd, "/usr/local/sbin/pppd ttyUSB%d call simpeer > /dev/null", modem_ports.ppp);
         printf("%s\n", cmd);
         ppp_status.run = 1;
         ret = system(cmd);

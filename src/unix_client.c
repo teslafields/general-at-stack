@@ -56,8 +56,8 @@ int ucli_connect_and_send(void *data, unsigned size) {
         printf("Write(%s) error\n", UCLISOCKPATH);
     else if (rc == 0)
         printf("Partial write, total bytes: %d\n", rc);
-    else
-        printf("ucli: successfully sent %d bytes\n", rc);
+    // else
+    //     printf("ucli: successfully sent %d bytes\n", rc);
     return rc;
 }
 
