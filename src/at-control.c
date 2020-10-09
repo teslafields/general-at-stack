@@ -37,12 +37,15 @@ enum ModemStates {
 };
 
 /* Modem states */
-enum ModemStates modem_state = MODEM_OFF;
+enum ModemStates modem_state;
 
 
 /* Global flags */
 int REQUEST = 0;
 int RETRIES = 3;
+
+int csq_index = 0;
+int csq_buffer[CSQ_BUF] = {0};
 
 struct timespec ts_cond_tout, ts_global_timer, ts_csq, ts_gps, ts_info;
 ModemInfo modem_info;
@@ -53,6 +56,7 @@ void decode_at_data();
 
 
 void init_global() {
+    modem_state = MODEM_OFF;
     modem_procedure = SETUP;
     memset(&modem_info, 0, sizeof(modem_info));
     memset(&modem_flags, 0, sizeof(modem_flags));
@@ -60,6 +64,7 @@ void init_global() {
 }
 
 void exit_control() {
+    RUN = 0;
     EXIT = 1;
     modem_state = OK;
     modem_procedure = WAIT;
@@ -111,11 +116,16 @@ void sync_all_timers() {
 
 void reset_states(int pof, char *msg) {
     if (msg)
-        printf("Message: %s", msg);
-    printf("\n");
+        printf("WARNING: %s\n", msg);
     modem_procedure = SETUP;
     modem_state = MODEM_OFF;
     modem_info.cpin = 0;
+    modem_info.creg = 0;
+    modem_info.cgreg = 0;
+    modem_info.rssi = RSSI_UKW;
+    modem_info.ber = RSSI_UKW;
+    strcpy(modem_info.cops, "");
+    strcpy(modem_info.netw, "");
     reset_tx_flags(3);
     if (pof)
         modem_flags.pof = 1;
@@ -168,7 +178,7 @@ void *at_control()
         /* Decode AT events */
         decode_at_data();
 
-        if (modem_flags.pof) {
+        if (modem_flags.pof && modem_state != POWER_OFF) {
             modem_state = POWER_OFF;
             reset_tx_flags(3);
         }
@@ -186,7 +196,7 @@ void *at_control()
                 if (ucli_ports_send_flag)
                     ucli_ports_send_flag = ucli_send_port_info(1, &modem_ports) > 0 ? 0 : 1;
                 if (ts_global_timer.tv_sec - ts_info.tv_sec >= TINFO || ucli_modem_send_flag) {
-                    if (ucli_send_modem_info(&modem_info, &gps_info) > 0)
+                    if (ucli_send_modem_info(&modem_info, &gps_info, 0) > 0)
                         ucli_modem_send_flag = 0;
                     else {
                         ucli_modem_send_flag = 1;
@@ -320,19 +330,25 @@ void decode_at_data()
             if (!strcmp(pch, AT) || !strcmp(pch, ATE))
                 decode_at_data();
             else if (!strcmp(pch, ATRING)){}
+            else if (!strcmp(pch, "NO CARRIER") || strstr(pch, "+PPPD"))
+                decode_at_data();
                 // modem_flags.ring = 1;
             else if (strstr(pch, ATCME) || strstr(pch, ATCMS)) {
                 pch += strlen(ATCME) + 2;
                 err = strtol(pch, NULL, 10);
-                printf("Error code: %d\n", err);
+                sprintf(fmt, "Received ERROR code: %d", err);
                 switch (err) {
                     case 3:
                     case 13:
-                        reset_states(1, pch);
+                        reset_states(1, fmt);
                         break;
                     default:
-                        reset_states(0, pch);
+                        reset_states(1, fmt);
                 }
+#ifdef UNIX_CLI
+                printf("ucli: CME error received, modem_info: sent %d bytes\n",
+                    ucli_send_modem_info(&modem_info, &gps_info, 1));
+#endif
             }
             else if (strstr(pch, ATSIM)) {
                 pch += strlen(ATSIM) + 2;
@@ -407,6 +423,10 @@ void decode_at_data()
                             case 2:
                                 reset_tx_flags(1);
                                 sleep(10);
+#ifdef UNIX_CLI
+                                printf("ucli: Not registered! modem_info: sent %d bytes\n",
+                                    ucli_send_modem_info(&modem_info, &gps_info, 1));
+#endif
                             default:
                                 break;
                         }
@@ -435,9 +455,26 @@ void decode_at_data()
                         modem_info.ber = RSSI_UKW;
                     }
                     else {
-                        if (dummy != modem_info.rssi)
-                            printf("CSQ Report: %d,%d,%s\n", dummy, modem_info.ber,
-                                    modem_info.netw);
+                        if (abs(dummy - modem_info.rssi) > CSQ_THRSHLD) {
+#ifdef UNIX_CLI
+                                n = modem_info.rssi;
+                                modem_info.rssi = dummy;
+                                printf("ucli: CSQ changed from %d to %d - %s. modem_info: sent %d bytes\n",
+                                        n, dummy, modem_info.netw, 
+                                        ucli_send_modem_info(&modem_info, &gps_info, 1));
+#endif
+                        }
+                        if (csq_index < CSQ_BUF) {
+                            csq_buffer[csq_index] = dummy;
+                            csq_index++;
+                        }
+                        else {
+                            printf("CSQ Report: [");
+                            for (csq_index=0; csq_index<CSQ_BUF; csq_index++)
+                                printf("%d,", csq_buffer[csq_index]);
+                            printf("%d], %d, %s\n", dummy, modem_info.ber, modem_info.netw);
+                            csq_index = 0;
+                        }
                         modem_info.rssi = dummy;
                     }
                     if (modem_procedure == SETUP)
@@ -562,7 +599,8 @@ void decode_at_data()
         }
 #endif
         else if (strstr(last_sent_cmd, ATCGDCONT) && !strcmp(pch, ATOK)) {
-            modem_state = LOG_INFO;
+            // modem_state = LOG_INFO;
+            modem_state = OK;
             modem_procedure = DONE;
             reset_tx_flags(3);
         }

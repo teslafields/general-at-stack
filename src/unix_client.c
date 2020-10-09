@@ -77,7 +77,7 @@ int ucli_send_port_info(char result, ModemUSBPorts *ports) {
     return ucli_connect_and_send((void *) ports_tx, PKG_PORTS_LEN);
 }
 
-int ucli_send_modem_info(ModemInfo *minfo, GPSInfo *ginfo) {
+int ucli_send_modem_info(ModemInfo *minfo, GPSInfo *ginfo, int warn) {
     static char modem_tx[PKG_MODEM_LEN];
     memset(modem_tx, 0, PKG_MODEM_LEN);
     int n = sizeof(ModemInfo);
@@ -87,6 +87,9 @@ int ucli_send_modem_info(ModemInfo *minfo, GPSInfo *ginfo) {
         memcpy(modem_tx + n, ginfo, PKG_GPS_LEN);
         n += PKG_GPS_LEN;
     }
-    ucli_mount_package(CMD_MODEM_INF, modem_tx);
+    if (warn)
+        ucli_mount_package(CMD_MODEM_WRN, modem_tx);
+    else
+        ucli_mount_package(CMD_MODEM_INF, modem_tx);
     return ucli_connect_and_send((void *) modem_tx, n);
 }

@@ -84,67 +84,67 @@ int check_ppp_process()
         code = WEXITSTATUS(code);
         switch(code) {
             case SUCCESS:
-                printf("pppd: Detached or success terminated");
+                printf("pppd: Detached or success terminated\n");
                 break;
             case FATAL:
-                printf("pppd: Fatal error: syscall or memory fail");
+                printf("pppd: Fatal error: syscall or memory fail\n");
                 break;
             case OPTION:
-                printf("pppd: Options error");
+                printf("pppd: Options error\n");
                 break;
             case PERMISSION:
-                printf("pppd: Permission error");
+                printf("pppd: Permission error\n");
                 break;
             case DRIVER:
-                printf("pppd: Driver error: kernel do not support ppp");
+                printf("pppd: Driver error: kernel do not support ppp\n");
                 break;
             case SIGNAL:
-                printf("pppd: Signaled: SIGINT, SIGTERM or SIGHUP received");
+                printf("pppd: Signaled: SIGINT, SIGTERM or SIGHUP received\n");
                 break;
             case LOCKPORT:
-                printf("pppd: Lock port error");
+                printf("pppd: Lock port error\n");
                 break;
             case OPENPORT:
-                printf("pppd: Open port error");
+                printf("pppd: Open port error\n");
                 break;
             case CONNECTION:
-                printf("pppd: Connect script failed");
+                printf("pppd: Connect script failed\n");
                 break;
             case COMMAND:
-                printf("pppd: Command failed");
+                printf("pppd: Command failed\n");
                 break;
             case NEGOTIATION:
-                printf("pppd: PPP negotiation failed");
+                printf("pppd: PPP negotiation failed\n");
                 break;
             case PREAUTH:
-                printf("pppd: Failed to authenticate itself");
+                printf("pppd: Failed to authenticate itself\n");
                 break;
             case IDLE:
-                printf("pppd: Terminated because it was idle");
+                printf("pppd: Terminated because it was idle\n");
                 break;
             case TIMEOUT:
-                printf("pppd: Terminated because connect time limit");
+                printf("pppd: Terminated because connect time limit\n");
                 break;
             case INCALL:
-                printf("pppd: Incoming call");
+                printf("pppd: Incoming call\n");
                 break;
             case ECHOREQUEST:
-                printf("pppd: Echo requests failed");
+                printf("pppd: Echo requests failed\n");
                 break;
             case HANGUP:
-                printf("pppd: Hangup");
+                printf("pppd: Hangup\n");
                 break;
             case LOOPBACK:
-                printf("pppd: Serial loopback detected");
+                printf("pppd: Serial loopback detected\n");
                 break;
             case INIT:
-                printf("pppd: Init script failed");
+                printf("pppd: Init script failed\n");
                 break;
             case POSAUTH:
-                printf("pppd: Failed to authenticate to the peer");
+                printf("pppd: Failed to authenticate to the peer\n");
                 break;
             default:
-                printf("pppd exit code[%d]", code);
+                printf("pppd: unmapped exit code[%d]\n", code);
                 break;
         }
         reset_ppp_status();

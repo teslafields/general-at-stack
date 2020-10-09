@@ -28,9 +28,9 @@
 #define NS 1000000000
 #define POLL_TOUT 3000
 #define TSLEEP 5
-#define TGPS 40
-#define TCSQ 25
-#define TINFO 60
+#define TGPS 15
+#define TCSQ 10
+#define TINFO 20
 
 /* RSSI boundaries */
 #define RSSI_MIN 6
@@ -38,6 +38,8 @@
 
 /* Hysteresis */
 #define PPP_HYST 2
+#define CSQ_BUF 10
+#define CSQ_THRSHLD 5
 
 /* Buffer sizes */
 #define MAX_SIZE 1024
@@ -173,7 +175,7 @@ void report_csq_to_agent(unsigned int rssi, unsigned int ber, char *network);
 int ucli_create_socket();
 int ucli_send_data(void *data, unsigned size);
 void ucli_close_socket();
-int ucli_send_modem_info(ModemInfo *minfo, GPSInfo *ginfo);
+int ucli_send_modem_info(ModemInfo *minfo, GPSInfo *ginfo, int warn);
 int ucli_send_port_info(char result, ModemUSBPorts *ports);
 
 enum ModemProcedure modem_procedure;
