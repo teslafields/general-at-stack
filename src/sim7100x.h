@@ -16,6 +16,8 @@
 #define ATGPS       "+CGPS"
 #define ATGPSINFO   "+CGPSINFO"
 #define ATSIM       "+SIMCARD"
+#define ATCVHU      "+CVHU"
+#define ATSTIN      "+STIN"
 #define ATCMEE      "+CMEE"
 #define ATCME       "+CME ERROR"
 #define ATCMS       "+CMS ERROR"

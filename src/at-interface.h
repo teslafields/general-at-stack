@@ -22,6 +22,9 @@
 #include <linux/types.h>
 #include "at-common.h"
 
+#define VERSION_MAJOR 1
+#define VERSION_MINOR 1
+
 #define ATDELIM "\r\n\r\n"
 
 /* Time values */

@@ -80,6 +80,8 @@ int ucli_send_port_info(char result, ModemUSBPorts *ports) {
 int ucli_send_modem_info(ModemInfo *minfo, GPSInfo *ginfo, int warn) {
     static char modem_tx[PKG_MODEM_LEN];
     memset(modem_tx, 0, PKG_MODEM_LEN);
+    modem_tx[2] = VERSION_MAJOR;
+    modem_tx[3] = VERSION_MINOR;
     int n = sizeof(ModemInfo);
     memcpy(modem_tx + PKG_HEAD_LEN, minfo, n);
     n += PKG_HEAD_LEN;

@@ -18,6 +18,7 @@ enum ModemStates {
     CHECK_CPIN,
     CHECK_CREG,
 #ifdef SIM7100
+    SET_CVHU,
     SET_CMEE,
     GET_UEINFO,
     GET_NETWORK,
@@ -43,6 +44,7 @@ enum ModemStates modem_state;
 /* Global flags */
 int REQUEST = 0;
 int RETRIES = 3;
+int ATH_ERR = 0;
 
 int csq_index = 0;
 int csq_buffer[CSQ_BUF] = {0};
@@ -117,6 +119,7 @@ void sync_all_timers() {
 void reset_states(int pof, char *msg) {
     if (msg)
         printf("WARNING: %s\n", msg);
+    ATH_ERR = 0;
     modem_procedure = SETUP;
     modem_state = MODEM_OFF;
     modem_info.cpin = 0;
@@ -184,8 +187,10 @@ void *at_control()
         }
         else if (modem_procedure == DONE) {
 
-            if (modem_flags.ring)
+            if (modem_flags.ring && !ATH_ERR) {
+                modem_procedure = WAIT;
                 modem_state = HANGUP;
+            }
 #ifdef PPP
             else if (!ppp_status.run && modem_info.rssi > RSSI_MIN &&
                     modem_info.rssi < RSSI_UKW)
@@ -264,6 +269,9 @@ void *at_control()
                 sprintf(tx_modem, "AT%s?", ATCREG);
                 break;
 #ifdef SIM7100
+            case SET_CVHU:
+                sprintf(tx_modem, "AT%s=0", ATCVHU);
+                break;
             case GET_UEINFO:
                 sprintf(tx_modem, "AT%s?", ATCPSI);
                 break;
@@ -312,6 +320,8 @@ void *at_control()
             printf("RETRIES exceed, powering off\n");
             modem_flags.pof = 1;
         }
+        else
+            printf("REQUEST setted\n");
         do_wait(&state_machine_lock, &state_machine_cond, TSLEEP);
     }
     close(modemfd.fd);
@@ -329,10 +339,12 @@ void decode_at_data()
         if (strcmp(pch, ATOK) && strcmp(pch, ATERR)) {
             if (!strcmp(pch, AT) || !strcmp(pch, ATE))
                 decode_at_data();
-            else if (!strcmp(pch, ATRING)){}
-            else if (!strcmp(pch, "NO CARRIER") || strstr(pch, "+PPPD"))
+            else if (!strcmp(pch, ATRING)) {
+                modem_flags.ring = 1;
+            }
+            else if (!strcmp(pch, "NO CARRIER") || strstr(pch, "+PPPD") || 
+                    strstr(pch, "MISSED_CALL") || strstr(pch, ATSTIN))
                 decode_at_data();
-                // modem_flags.ring = 1;
             else if (strstr(pch, ATCME) || strstr(pch, ATCMS)) {
                 pch += strlen(ATCME) + 2;
                 err = strtol(pch, NULL, 10);
@@ -410,7 +422,8 @@ void decode_at_data()
                             case 1:
                             case 5:
 #ifdef SIM7100
-                                modem_state = GET_NETWORK;
+                                modem_state = SET_CVHU;
+
                                 reset_tx_flags(3);
 #endif
                                 break;
@@ -570,8 +583,10 @@ void decode_at_data()
                 decode_at_data();
         }
         /* Commands that return OK or ERROR should be handled here */
-        else if (!strcmp(last_sent_cmd, ATH) && !strcmp(pch, ATOK)) {
+        else if (!strcmp(last_sent_cmd, ATH)) {
+            modem_procedure = DONE;
             modem_state = OK;
+            modem_flags.ring = 0;
             reset_tx_flags(3);
         }
         else if (!strcmp(last_sent_cmd, AT) && !strcmp(pch, ATOK)) {
@@ -597,15 +612,19 @@ void decode_at_data()
             modem_state = GET_CIMI;
             reset_tx_flags(3);
         }
+        else if (strstr(last_sent_cmd, ATCVHU)) {
+            if (strcmp(pch, ATOK)) {
+                printf("Error setting CVHU\n");
+                ATH_ERR = 1;
+            }
+            modem_state = GET_NETWORK;
+            reset_tx_flags(3);
+        }
 #endif
         else if (strstr(last_sent_cmd, ATCGDCONT) && !strcmp(pch, ATOK)) {
             // modem_state = LOG_INFO;
             modem_state = OK;
             modem_procedure = DONE;
-            reset_tx_flags(3);
-        }
-        else if (!strcmp(last_sent_cmd, ATH)) {
-            modem_state = OK;
             reset_tx_flags(3);
         }
         else if (strstr(last_sent_cmd, ATPOF)) {
