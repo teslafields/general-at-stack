@@ -69,29 +69,38 @@ void ucli_mount_package(char cmd, char *data) {
 }
 
 int ucli_send_port_info(char result, ModemUSBPorts *ports) {
-    static char ports_tx[PKG_PORTS_LEN];
-    memset(ports_tx, 0, PKG_MODEM_LEN);
-    ports_tx[2] = result;
-    memcpy(ports_tx + 3, ports, sizeof(ModemUSBPorts));
-    ucli_mount_package(CMD_PORTS_INF, ports_tx);
-    return ucli_connect_and_send((void *) ports_tx, PKG_PORTS_LEN);
+    static char package_tx[PKG_PORTS_LEN];
+    memset(package_tx, 0, PKG_MODEM_LEN);
+    package_tx[2] = result;
+    memcpy(package_tx + 3, ports, sizeof(ModemUSBPorts));
+    ucli_mount_package(CMD_PORTS_INF, package_tx);
+    return ucli_connect_and_send((void *) package_tx, PKG_PORTS_LEN);
 }
 
 int ucli_send_modem_info(ModemInfo *minfo, GPSInfo *ginfo, int warn) {
-    static char modem_tx[PKG_MODEM_LEN];
-    memset(modem_tx, 0, PKG_MODEM_LEN);
-    modem_tx[2] = VERSION_MAJOR;
-    modem_tx[3] = VERSION_MINOR;
+    static char package_tx[PKG_MODEM_LEN];
+    memset(package_tx, 0, PKG_MODEM_LEN);
+    package_tx[2] = VERSION_MAJOR;
+    package_tx[3] = VERSION_MINOR;
     int n = sizeof(ModemInfo);
-    memcpy(modem_tx + PKG_HEAD_LEN, minfo, n);
+    memcpy(package_tx + PKG_HEAD_LEN, minfo, n);
     n += PKG_HEAD_LEN;
     if (ginfo->date > 0) {
-        memcpy(modem_tx + n, ginfo, PKG_GPS_LEN);
+        memcpy(package_tx + n, ginfo, PKG_GPS_LEN);
         n += PKG_GPS_LEN;
     }
     if (warn)
-        ucli_mount_package(CMD_MODEM_WRN, modem_tx);
+        ucli_mount_package(CMD_MODEM_WRN, package_tx);
     else
-        ucli_mount_package(CMD_MODEM_INF, modem_tx);
-    return ucli_connect_and_send((void *) modem_tx, n);
+        ucli_mount_package(CMD_MODEM_INF, package_tx);
+    return ucli_connect_and_send((void *) package_tx, n);
 }
+
+int ucli_send_ppp_exit_code(int code) {
+    static char package_tx[PKG_PPP_E_LEN];
+    memset(package_tx, 0, PKG_MODEM_LEN);
+    memcpy(package_tx + PKG_HEAD_LEN, &code, sizeof(int));
+    ucli_mount_package(CMD_PPP_ECODE, package_tx);
+    return ucli_connect_and_send((void *) package_tx, PKG_PPP_E_LEN);
+}
+

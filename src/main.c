@@ -15,10 +15,20 @@ void exit_error(const char *format, ...)
     exit(1);
 }
 
+static void sigint_handler(int sig, siginfo_t *siginfo, void *context) {
+    printf("SigInt received\n");
+    exit_control();
+}
+
 int main(int argc, char *argv[])
 {
     /* This is used for systemd log */
     setbuf(stdout, NULL);
+
+    struct sigaction act;
+    act.sa_sigaction = &sigint_handler;
+    act.sa_flags = SA_SIGINFO;
+    sigaction(SIGINT, &act, NULL);
 
     int retries = 5;
 

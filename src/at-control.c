@@ -65,6 +65,11 @@ void init_global() {
     memset(&gps_info, 0, sizeof(gps_info));
 }
 
+void force_reboot() {
+    printf("forcing reboot now!!!\n");
+    system("reboot");
+}
+
 void exit_control() {
     RUN = 0;
     EXIT = 1;
@@ -130,7 +135,7 @@ void reset_states(int pof, char *msg) {
     strcpy(modem_info.cops, "");
     strcpy(modem_info.netw, "");
     reset_tx_flags(3);
-    if (pof)
+    if (pof && !modem_flags.pof)
         modem_flags.pof = 1;
 }
 
@@ -152,8 +157,10 @@ int write_at_data()
         memset(tx_modem, 0, CMD_SIZE);
         RETRIES--;
     }
-    else
+    else {
         printf("USB write() error\n");
+        exit_control();
+    }
     return n;
 }
 
@@ -162,6 +169,7 @@ void *at_control()
     unsigned long diff;
     short ppp_hyst = 0;
     int n, ucli_modem_send_flag = 1, ucli_ports_send_flag = 1;
+    int pof_retries = 10;
     init_global();
     sync_all_timers();
     while (RUN) {
@@ -170,6 +178,7 @@ void *at_control()
             if (ppp_hyst >= PPP_HYST) {
                 if ( (n = check_ppp_process()) ) { // if ppp has exited
                     ppp_hyst = 0;
+                    ucli_send_ppp_exit_code(n);
                     if (n == 8 && !modem_flags.pof) // connect script failed
                         modem_flags.pof = 1;
                 }
@@ -320,8 +329,14 @@ void *at_control()
             printf("RETRIES exceed, powering off\n");
             modem_flags.pof = 1;
         }
-        else
-            printf("REQUEST setted\n");
+        else {
+            if (modem_state == POWER_OFF) {
+                if (!pof_retries)
+                    force_reboot();
+                else
+                    pof_retries--;
+            }
+        }
         do_wait(&state_machine_lock, &state_machine_cond, TSLEEP);
     }
     close(modemfd.fd);
@@ -364,7 +379,7 @@ void decode_at_data()
             }
             else if (strstr(pch, ATSIM)) {
                 pch += strlen(ATSIM) + 2;
-                if (!strcmp(pch, "NOT AVAILABLE"))
+                if (!strcmp(pch, "NOT AVAILABLE") && modem_state != POWER_OFF)
                     reset_states(0, pch);
             }
             else if (strstr(pch, ATCPIN)) {
@@ -632,6 +647,8 @@ void decode_at_data()
                 exit_control();
                 if (modem_flags.pof)
                     modem_flags.pof = 0;
+            } else {
+                force_reboot();
             }
         }
     }

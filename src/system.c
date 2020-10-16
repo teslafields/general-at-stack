@@ -1,5 +1,17 @@
 #include "at-interface.h"
 
+void check_and_set_iptables() {
+    printf("Checking iptables rules\n");
+    int rc = system("iptables -S INPUT | grep ppp");
+    if (WEXITSTATUS(rc) == 0) 
+        return;
+    rc = system("iptables -A INPUT -i ppp0 -p tcp --match multiport --dports 22,80,443,1883,8883 -j DROP");
+    if (WEXITSTATUS(rc)) {
+        printf("Error configuring iptables!\n");
+        return;
+    }
+    printf("iptables rules applied!\n");
+}
 
 int get_tty_port_script(ModemUSBPorts *ports) {
     FILE *fsim;
@@ -22,6 +34,7 @@ int get_tty_port_script(ModemUSBPorts *ports) {
     printf("diag=ttyUSB%d, gps=ttyUSB%d, at=ttyUSB%d, ppp=ttyUSB%d, audio=ttyUSB%d\n", 
             ports->diag, ports->gps, ports->at, ports->ppp, ports->audio);
 #endif
+    check_and_set_iptables();
     return 0;
 }
 
@@ -82,6 +95,7 @@ int get_tty_port(ModemUSBPorts *ports, int iteration){
     printf("diag=ttyUSB%d, gps=ttyUSB%d, at=ttyUSB%d, ppp=ttyUSB%d, audio=ttyUSB%d\n", 
             ports->diag, ports->gps, ports->at, ports->ppp, ports->audio);
 #endif
+    check_and_set_iptables();
     return 0;
 }
 

@@ -26,6 +26,7 @@ pid_t get_ppp_pid() {
 
 void kill_ppp()
 {
+    printf("checking if ppp is running\n");
     pid_t ppp_pid = get_ppp_pid();
     if (ppp_pid > 0) {
         int ret, timeout = 10;
@@ -74,8 +75,7 @@ int update_dns_servers() {
     return 0;
 }
 
-int check_ppp_process()
-{
+int check_ppp_process() {
     int code;
     pthread_mutex_lock(&ppp_lock);
     code = ppp_status.rc;
@@ -162,8 +162,7 @@ int check_ppp_process()
     return code;
 }
 
-void *ppp_procedure()
-{
+void *ppp_procedure() {
     int ret;
     char cmd[ARG_SIZE] = {0};
     reset_ppp_status();

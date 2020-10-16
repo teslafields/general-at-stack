@@ -23,7 +23,7 @@
 #include "at-common.h"
 
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 1
+#define VERSION_MINOR 2
 
 #define ATDELIM "\r\n\r\n"
 
@@ -146,6 +146,8 @@ char rx_modem[MAX_SIZE];
 char tx_modem[CMD_SIZE];
 char last_sent_cmd[CMD_SIZE];
 
+void exit_control();
+
 /* AT functions */
 void *at_control();
 void *read_at_data();
@@ -180,6 +182,7 @@ int ucli_send_data(void *data, unsigned size);
 void ucli_close_socket();
 int ucli_send_modem_info(ModemInfo *minfo, GPSInfo *ginfo, int warn);
 int ucli_send_port_info(char result, ModemUSBPorts *ports);
+int ucli_send_ppp_exit_code(int code);
 
 enum ModemProcedure modem_procedure;
 extern ATQueue* rx_queue;
