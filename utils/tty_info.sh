@@ -18,3 +18,6 @@ for devpath in $(find /sys/bus/usb/devices/usb*/ -name dev); do
 done
 #echo ${devnum[@]}
 echo $start_iface $num_of_ifaces
+if [ $num_of_ifaces -eq 0 ]; then
+   exit 1
+fi
