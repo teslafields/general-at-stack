@@ -5,7 +5,7 @@ void check_and_set_iptables() {
     int rc = system("iptables -S INPUT | grep ppp");
     if (WEXITSTATUS(rc) == 0) 
         return;
-    rc = system("iptables -A INPUT -i ppp0 -p tcp --match multiport --dports 22,80,443,1883,8883 -j DROP");
+    // rc = system("iptables -A INPUT -i ppp0 -p tcp --match multiport --dports 22,80,443,1883,8883 -j DROP");
     if (WEXITSTATUS(rc)) {
         printf("Error configuring iptables!\n");
         return;
