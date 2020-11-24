@@ -5,7 +5,7 @@ void check_and_set_iptables() {
     int rc = system("iptables -S INPUT | grep ppp");
     if (WEXITSTATUS(rc) == 0) 
         return;
-    // rc = system("iptables -A INPUT -i ppp0 -p tcp --match multiport --dports 22,80,443,1883,8883 -j DROP");
+    rc = system("iptables -A INPUT -i ppp0 -p tcp --match multiport --dports 22,80,443,1883,8883 -j DROP");
     if (WEXITSTATUS(rc)) {
         printf("Error configuring iptables!\n");
         return;
@@ -34,7 +34,7 @@ int get_tty_port_script(ModemUSBPorts *ports) {
     printf("diag=ttyUSB%d, gps=ttyUSB%d, at=ttyUSB%d, ppp=ttyUSB%d, audio=ttyUSB%d\n", 
             ports->diag, ports->gps, ports->at, ports->ppp, ports->audio);
 #endif
-    check_and_set_iptables();
+    // check_and_set_iptables();
     return 0;
 }
 
