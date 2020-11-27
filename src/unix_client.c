@@ -70,7 +70,7 @@ void ucli_mount_package(char cmd, char *data) {
 
 int ucli_send_port_info(char result, ModemUSBPorts *ports) {
     static char package_tx[PKG_PORTS_LEN];
-    memset(package_tx, 0, PKG_MODEM_LEN);
+    memset(package_tx, 0, PKG_PORTS_LEN);
     package_tx[2] = result;
     memcpy(package_tx + 3, ports, sizeof(ModemUSBPorts));
     ucli_mount_package(CMD_PORTS_INF, package_tx);
@@ -98,7 +98,7 @@ int ucli_send_modem_info(ModemInfo *minfo, GPSInfo *ginfo, int warn) {
 
 int ucli_send_ppp_exit_code(int code) {
     static char package_tx[PKG_PPP_E_LEN];
-    memset(package_tx, 0, PKG_MODEM_LEN);
+    memset(package_tx, 0, PKG_PPP_E_LEN);
     memcpy(package_tx + PKG_HEAD_LEN, &code, sizeof(int));
     ucli_mount_package(CMD_PPP_ECODE, package_tx);
     return ucli_connect_and_send((void *) package_tx, PKG_PPP_E_LEN);
