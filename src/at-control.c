@@ -215,10 +215,8 @@ void *at_control()
                     }
                     sync_timers(&ts_global_timer, &ts_info);
                 }
-                else if (ts_global_timer.tv_sec - ts_gps.tv_sec >= TGPS) {
-#else
-                if (ts_global_timer.tv_sec - ts_gps.tv_sec >= TGPS) {
 #endif
+                if (ts_global_timer.tv_sec - ts_gps.tv_sec >= TGPS) {
                     sync_timers(&ts_global_timer, &ts_gps);
                     modem_state = GET_GPSINFO;
                 }
