@@ -1,8 +1,5 @@
 #include "at-interface.h"
-#if defined (SIM7600) && !defined (SIM7100)
-#include "SIM7600X-H.h"
-#endif
-#if defined (SIM7100) && !defined (SIM7600)
+#ifdef SIM7100
 #include "sim7100x.h"
 #endif
 

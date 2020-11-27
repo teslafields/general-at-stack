@@ -1,7 +1,0 @@
-#define ATCPIN   "AT+CPIN?"
-#define ATICCID  "AT+CICCID"
-#define ATCREG   "AT+CREG?"
-#define ATCSQ    "AT+CSQ"
-#define ATCOPS   "AT+COPS?"
-#define ATCGDCONT "AT+CGDCONT"
-
