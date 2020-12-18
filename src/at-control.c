@@ -530,7 +530,7 @@ void decode_at_data()
                             &gps_info.speed, &gps_info.course);
                     if (n) {
                         convert_gps_coordinates(0, &gps_info);
-                        printf("%u°%u'%.2f\"%c %u°%u'%.2f\"%c %.2f %.2f\n", gps_info.latdd, gps_info.latmm, gps_info.latss, gps_info.latdir, gps_info.lngdd, gps_info.lngmm, gps_info.lngss, gps_info.lngdir, gps_info.alt, gps_info.speed);
+                        printf("%u°%u'%.2f\"%c %u°%u'%.2f\"%c %.2f %.2f %u\n", gps_info.latdd, gps_info.latmm, gps_info.latss, gps_info.latdir, gps_info.lngdd, gps_info.lngmm, gps_info.lngss, gps_info.lngdir, gps_info.alt, gps_info.speed, gps_info.date);
                     }
                 }
                 modem_state = OK;

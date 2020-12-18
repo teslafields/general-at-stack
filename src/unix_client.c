@@ -1,23 +1,25 @@
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include "unix_client.h"
 
 int sock_fd = 0, UCLISOCK = 0;
 
 int ucli_create_socket() {
+    struct stat sb;
     struct sockaddr_un addr;
-    if ((sock_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) 
+
+    if (!(stat(UCLISOCKPATH, &sb) == 0 && S_ISSOCK(sb.st_mode)))
         return -1;
+
+    if ((sock_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) 
+        return -2;
 
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, UCLISOCKPATH, sizeof(addr.sun_path)-1);
 
     if (connect(sock_fd, (struct sockaddr*)&addr, sizeof(addr)) == -1)
-        return -1;
+        return -3;
 
     UCLISOCK = 1;
     return 0;
@@ -45,9 +47,14 @@ void ucli_close_socket() {
 int ucli_connect_and_send(void *data, unsigned size) {
     if (!data)
         return -3;
-    int rc;
-    if (ucli_create_socket() < 0) {
-        printf("Connect(%s) failed\n", UCLISOCKPATH);
+    int rc = ucli_create_socket();
+    if (rc < 0) {
+        if (rc == -1)
+            printf("Socket path(%s) error\n", UCLISOCKPATH);
+        else if (rc == -2)
+            printf("Socket create(%s) failed\n", UCLISOCKPATH);
+        else
+            printf("Connect(%s) failed\n", UCLISOCKPATH);
         return -2;
     }
     rc = ucli_send_data(data, size);
@@ -56,8 +63,8 @@ int ucli_connect_and_send(void *data, unsigned size) {
         printf("Write(%s) error\n", UCLISOCKPATH);
     else if (rc == 0)
         printf("Partial write, total bytes: %d\n", rc);
-    // else
-    //     printf("ucli: successfully sent %d bytes\n", rc);
+    else
+        printf("ucli: successfully sent %d bytes\n", rc);
     return rc;
 }
 
