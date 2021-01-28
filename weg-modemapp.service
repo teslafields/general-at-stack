@@ -14,7 +14,7 @@ Restart=always
 
 StandardOutput=syslog
 StandardError=syslog
-SyslogIdentifier=modem-app
+SyslogIdentifier=modemapp
 
 KillMode=control-group
 
