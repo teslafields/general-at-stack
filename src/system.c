@@ -34,7 +34,7 @@ int get_tty_port_script(ModemUSBPorts *ports) {
     printf("diag=ttyUSB%d, gps=ttyUSB%d, at=ttyUSB%d, ppp=ttyUSB%d, audio=ttyUSB%d\n", 
             ports->diag, ports->gps, ports->at, ports->ppp, ports->audio);
 #endif
-    // check_and_set_iptables();
+    check_and_set_iptables();
     return 0;
 }
 
