@@ -171,7 +171,7 @@ void *ppp_procedure() {
         if (EXIT)
             break;
         kill_ppp();
-        sprintf(cmd, "/usr/local/sbin/pppd ttyUSB%d call simpeer > /dev/null", modem_ports.ppp);
+        sprintf(cmd, "/usr/sbin/pppd ttyUSB%d call simpeer > /dev/null", modem_ports.ppp);
         printf("%s\n", cmd);
         ppp_status.run = 1;
         ret = system(cmd);

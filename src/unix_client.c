@@ -2,7 +2,7 @@
 #include <sys/un.h>
 #include "unix_client.h"
 
-int sock_fd = 0, UCLISOCK = 0;
+int sock_fd = 0, UCLISOCK = 0, LOG_ONCE = 1;
 
 int ucli_create_socket() {
     struct stat sb;
@@ -49,12 +49,15 @@ int ucli_connect_and_send(void *data, unsigned size) {
         return -3;
     int rc = ucli_create_socket();
     if (rc < 0) {
-        if (rc == -1)
-            printf("Socket path(%s) error\n", UCLISOCKPATH);
-        else if (rc == -2)
-            printf("Socket create(%s) failed\n", UCLISOCKPATH);
-        else
-            printf("Connect(%s) failed\n", UCLISOCKPATH);
+        if (LOG_ONCE) {
+            if (rc == -1)
+                printf("Socket path(%s) error\n", UCLISOCKPATH);
+            else if (rc == -2)
+                printf("Socket create(%s) failed\n", UCLISOCKPATH);
+            else
+                printf("Connect(%s) failed\n", UCLISOCKPATH);
+            LOG_ONCE = 0;
+        }
         return -2;
     }
     rc = ucli_send_data(data, size);
@@ -63,8 +66,9 @@ int ucli_connect_and_send(void *data, unsigned size) {
         printf("Write(%s) error\n", UCLISOCKPATH);
     else if (rc == 0)
         printf("Partial write, total bytes: %d\n", rc);
-    else
-        printf("ucli: successfully sent %d bytes\n", rc);
+    // else
+    //     printf("ucli: successfully sent %d bytes\n", rc);
+    LOG_ONCE = 1;
     return rc;
 }
 

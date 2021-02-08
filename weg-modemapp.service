@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/modemapp
+ExecStart=/usr/bin/modemapp
 #ExecReload=/bin/kill -s HUP $MAINPID
 
 TimeoutSec=0

@@ -18,7 +18,7 @@ int get_tty_port_script(ModemUSBPorts *ports) {
     int ret, start, num;
     char result[ARG_SIZE] = {0};
 #ifdef SIM7100
-    fsim = popen("/usr/local/bin/simdevs", "r");
+    fsim = popen("/usr/bin/simdevs", "r");
     ret = fread(result, 1, ARG_SIZE, fsim);
     pclose(fsim);
     if (!ret)
