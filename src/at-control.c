@@ -347,14 +347,14 @@ void decode_at_data()
     if (pch) {
         strcpy(payload, pch);
         if (strcmp(pch, ATOK) && strcmp(pch, ATERR)) {
-            if (!strcmp(pch, AT) || !strcmp(pch, ATE))
+            /* Ignore the events bellow */
+            if (!strcmp(pch, AT) || !strcmp(pch, ATE) ||
+                    !strcmp(pch, "NO CARRIER") || strstr(pch, "+PPPD") ||
+                    strstr(pch, "MISSED_CALL") || strstr(pch, ATSTIN))
                 decode_at_data();
             else if (!strcmp(pch, ATRING)) {
                 modem_flags.ring = 1;
             }
-            else if (!strcmp(pch, "NO CARRIER") || strstr(pch, "+PPPD") || 
-                    strstr(pch, "MISSED_CALL") || strstr(pch, ATSTIN))
-                decode_at_data();
             else if (strstr(pch, ATCME) || strstr(pch, ATCMS)) {
                 pch += strlen(ATCME) + 2;
                 err = strtol(pch, NULL, 10);
@@ -375,7 +375,7 @@ void decode_at_data()
             else if (strstr(pch, ATSIM)) {
                 pch += strlen(ATSIM) + 2;
                 if (!strcmp(pch, "NOT AVAILABLE") && modem_state != POWER_OFF)
-                    reset_states(0, pch);
+                    reset_states(1, pch);
             }
             else if (strstr(pch, ATCPIN)) {
                 pch += strlen(ATCPIN) + 2;
@@ -397,7 +397,7 @@ void decode_at_data()
                     }
                 }
                 else
-                    reset_states(0, pch);
+                    reset_states(1, pch);
             }
             else if (strstr(pch, ATCGMR)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
@@ -583,9 +583,9 @@ void decode_at_data()
                 }
             }
             else if (strstr(last_sent_cmd, ATCIMI)) {
+                reset_tx_flags(3);
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
                     modem_state = CHECK_CPIN;
-                    reset_tx_flags(3);
                     strncpy(modem_info.cimi, payload, CHK_SIZE-1);
                 }
             }
@@ -636,6 +636,9 @@ void decode_at_data()
             modem_state = OK;
             modem_procedure = DONE;
             reset_tx_flags(3);
+        }
+        else if (strstr(last_sent_cmd, ATCIMI) && !strcmp(pch, ATERR)) {
+            reset_states(1, pch);
         }
         else if (strstr(last_sent_cmd, ATPOF)) {
             if (!strcmp(pch, ATOK)) {

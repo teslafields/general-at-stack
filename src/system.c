@@ -16,14 +16,17 @@ void check_and_set_iptables() {
 int get_tty_port_script(ModemUSBPorts *ports) {
     FILE *fsim;
     int ret, start, num;
-    char result[ARG_SIZE] = {0};
+    char cmd_data[ARG_SIZE] = {0};
 #ifdef SIM7100
-    fsim = popen("/usr/bin/simdevs", "r");
-    ret = fread(result, 1, ARG_SIZE, fsim);
+    sprintf(cmd_data, "%s %s %s", SIMCOM_SEARCH_BIN, SYSFS_PATH,
+            SYSFS_FILTER);
+    fsim = popen(cmd_data, "r");
+    memset(cmd_data, 0, ARG_SIZE);
+    ret = fread(cmd_data, 1, ARG_SIZE, fsim);
     pclose(fsim);
     if (!ret)
         return -1;
-    ret = sscanf(result, "%d %d", &start, &num);
+    ret = sscanf(cmd_data, "TTY_START=%d\nTTY_TOTAL=%d", &start, &num);
     if (ret < 2 || !num)
         return -1;
     ports->diag = start;

@@ -55,20 +55,31 @@ int check_ppp_interface()
 }
 
 int update_dns_servers() {
-    FILE *fsrc, *fdest;
+    FILE *fsrc = NULL, *fdest = NULL;
     fsrc = fopen(PPP_RESOLV, "r");
-    if (!fsrc)
+    char *opw = "w+", *opa = "a+", *op = NULL;
+    if (!fsrc) {
+        printf("Error fopen read %s\n", PPP_RESOLV);
+        op = opw;
+    }
+    else
+        op = opa;
+    fdest = fopen(RESOLV_CONF, op);
+    if (!fdest) {
+        printf("Error fopen write %s\n", RESOLV_CONF);
         return -1;
-    fdest = fopen(RESOLV_CONF, "w+");
-    if (!fdest)
-        return -1;
+    }
     char content[CMD_SIZE] = {0};
     int dns_nr = 2;
-    while (!feof(fsrc) && dns_nr--) {
-        fgets(content, sizeof(content)-1, fsrc);
-        fwrite(content, sizeof(char), strlen(content), fdest);
-    } 
-    fclose(fsrc);
+    if (fsrc) {
+        while (!feof(fsrc) && dns_nr--) {
+            fgets(content, sizeof(content)-1, fsrc);
+            fwrite(content, sizeof(char), strlen(content), fdest);
+        }
+        fclose(fsrc);
+    }
+    /* This might be configurable in the future */
+    fwrite("\n", sizeof(char), strlen("\n"), fdest);
     fwrite(DNS1, sizeof(char), strlen(DNS1), fdest);
     fwrite(DNS2, sizeof(char), strlen(DNS2), fdest);
     fclose(fdest);
@@ -153,7 +164,9 @@ int check_ppp_process() {
     else {
         if (check_ppp_interface()) {
             if (!ppp_status.dns_updated) {
+#ifndef RESOLVED
                 printf("ppp: update dns[%d]\n", update_dns_servers());
+#endif
                 ppp_status.dns_updated = 1;
             }
         }

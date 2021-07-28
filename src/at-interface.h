@@ -61,6 +61,11 @@
 #define RESOLV_CONF "/etc/resolv.conf"
 #define INFO_AGENT "/var/lib/losant-edge-agent/data/modem_info.json"
 
+/* Sysfs SIMCOM port search */
+#define SIMCOM_SEARCH_BIN "simcom-search"
+#define SYSFS_PATH "/sys/bus/usb/devices/usb2" // Compulab IOT-GATE uses USB2 for modem communication
+#define SYSFS_FILTER "dev"
+
 /* Modem procdeures */
 enum ModemProcedure {
     SETUP,
