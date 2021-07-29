@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
 
     int retries = 5;
 
-    printf("MODEM-APP start up\n");
+    printf("MODEM-APP start up for MODEL=%s\n", MODEM_MODEL);
+
     while (get_tty_port_script(&modem_ports) != 0 && retries) {
         printf("Port not found.. %d\n", retries);
         sleep(3);

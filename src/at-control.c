@@ -1,6 +1,6 @@
 #include "at-interface.h"
-#ifdef SIM7100
-#include "sim7100x.h"
+#ifdef SIM7600
+#include "sim7600x.h"
 #endif
 
 enum ModemStates {
@@ -14,7 +14,7 @@ enum ModemStates {
     GET_ICCID,
     CHECK_CPIN,
     CHECK_CREG,
-#ifdef SIM7100
+#ifdef SIM7600
     SET_CVHU,
     SET_CMEE,
     GET_UEINFO,
@@ -245,7 +245,7 @@ void *at_control()
             case GET_CGSN:
                 sprintf(tx_modem, "AT%s", ATCGSN);
                 break;
-#ifdef SIM7100
+#ifdef SIM7600
             case SET_CMEE:
                 sprintf(tx_modem, "AT%s=1", ATCMEE);
                 break;
@@ -263,7 +263,7 @@ void *at_control()
                 sprintf(tx_modem, "AT%s?", ATCPIN);
                 break;
             case GET_ICCID:
-#ifdef SIM7100
+#ifdef SIM7600
                 strcpy(tx_modem, "AT+CICCID");
 #else
                 sprintf(tx_modem, "AT%s", ATICCID);
@@ -272,7 +272,7 @@ void *at_control()
             case CHECK_CREG:
                 sprintf(tx_modem, "AT%s?", ATCREG);
                 break;
-#ifdef SIM7100
+#ifdef SIM7600
             case SET_CVHU:
                 sprintf(tx_modem, "AT%s=0", ATCVHU);
                 break;
@@ -431,7 +431,7 @@ void decode_at_data()
                         switch (modem_info.creg) {
                             case 1:
                             case 5:
-#ifdef SIM7100
+#ifdef SIM7600
                                 modem_state = SET_CVHU;
 
                                 reset_tx_flags(3);
@@ -520,7 +520,7 @@ void decode_at_data()
                     reset_tx_flags(3);
                 }
             }
-#ifdef SIM7100
+#ifdef SIM7600
             else if (strstr(pch, ATGPSINFO)) {
                 memset(&gps_info, 0, sizeof(gps_info));
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
@@ -573,7 +573,7 @@ void decode_at_data()
             }
             else if (strstr(last_sent_cmd, ATCGSN)) {
                 if (!strcmp(dequeue(rx_queue), ATOK)) {
-#ifdef SIM7100
+#ifdef SIM7600
                     modem_state = SET_CMEE;
 #else
                     modem_state = GET_CIMI;
@@ -607,7 +607,7 @@ void decode_at_data()
             modem_state = GET_CGMI;
             reset_tx_flags(3);
         }
-#ifdef SIM7100
+#ifdef SIM7600
         else if (strstr(last_sent_cmd, ATCMEE)) {
             if (strcmp(pch, ATOK)) {
                 printf("Error setting CMEE\n");

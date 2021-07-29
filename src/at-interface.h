@@ -23,7 +23,7 @@
 #include "at-common.h"
 
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 3
+#define VERSION_MINOR 4
 
 #define ATDELIM "\r\n\r\n"
 
@@ -62,7 +62,7 @@
 #define INFO_AGENT "/var/lib/losant-edge-agent/data/modem_info.json"
 
 /* Sysfs SIMCOM port search */
-#define SIMCOM_SEARCH_BIN "simcom-search"
+#define SYSFS_BIN "sysfs-search"
 #define SYSFS_PATH "/sys/bus/usb/devices/usb2" // Compulab IOT-GATE uses USB2 for modem communication
 #define SYSFS_FILTER "dev"
 

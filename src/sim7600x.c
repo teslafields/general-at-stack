@@ -1,4 +1,4 @@
-#include "sim7100x.h"
+#include "sim7600x.h"
 
 const char* networks[NETW_LEN] = {
     "no service",

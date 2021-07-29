@@ -1,5 +1,5 @@
-#ifndef SIM100X_H
-#define SIM100X_H
+#ifndef SIM7600X_H
+#define SIM7600X_H
 
 #define ATURC       "AT+CATR"
 #define ATCPIN      "+CPIN"

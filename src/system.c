@@ -17,8 +17,8 @@ int get_tty_port_script(ModemUSBPorts *ports) {
     FILE *fsim;
     int ret, start, num;
     char cmd_data[ARG_SIZE] = {0};
-#ifdef SIM7100
-    sprintf(cmd_data, "%s %s %s", SIMCOM_SEARCH_BIN, SYSFS_PATH,
+#ifdef SIM7600
+    sprintf(cmd_data, "%s %s %s %s", SYSFS_BIN, MODEM_MODEL, SYSFS_PATH,
             SYSFS_FILTER);
     fsim = popen(cmd_data, "r");
     memset(cmd_data, 0, ARG_SIZE);
@@ -89,7 +89,7 @@ int get_tty_port(ModemUSBPorts *ports, int iteration){
         printf("TTY disconnected!\n");
         return -1;
     }
-#ifdef SIM7100
+#ifdef SIM7600
     ports->audio = (int) strtol(pch + strlen("ttyUSB"), NULL, 10);
     ports->ppp = ports->audio - 1;
     ports->at = ports->ppp - 1;
